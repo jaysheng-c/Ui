@@ -109,16 +109,33 @@ void TableView::keyPressEvent(QKeyEvent *event)
 
 void TableView::onExecMenu(const QPoint &pos)
 {
+    auto selectionModel = this->selectionModel();
+    auto selections = selectionModel->selection();
+    bool clearFlag { true };
     if (this->sender() == this->horizontalHeader()) {
-        this->selectionModel()->clear();
         auto section = this->horizontalHeader()->logicalIndexAt(pos);
-        QItemSelection selection(m_model->index(0, section), m_model->index(m_model->rowCount({}) - 1, section));
-        this->selectionModel()->select(selection, QItemSelectionModel::Select);
+        // 判断是否为列选中且列选中区域为当前右键对应的列
+        for (const auto &selection : selections) {
+            clearFlag = (selection.left() > section || selection.right() < section);
+            clearFlag |= (selection.height() != this->model()->rowCount());
+        }
+        if (clearFlag) {
+            selectionModel->clear();
+            QItemSelection selection(m_model->index(0, section), m_model->index(m_model->rowCount({}) - 1, section));
+            selectionModel->select(selection, QItemSelectionModel::Select);
+        }
     } else if (this->sender() == this->verticalHeader()) {
-        this->selectionModel()->clear();
         auto section = this->verticalHeader()->logicalIndexAt(pos);
-        QItemSelection selection(m_model->index(section, 0), m_model->index(section, m_model->columnCount({}) - 1));
-        this->selectionModel()->select(selection, QItemSelectionModel::Select);
+        // 判断是否为列选中且列选中区域为当前右键对应的列
+        for (const auto &selection : selections) {
+            clearFlag = (selection.top() > section || selection.bottom() < section);
+            clearFlag |= (selection.width() != this->model()->columnCount());
+        }
+        if (clearFlag) {
+            selectionModel->clear();
+            QItemSelection selection(m_model->index(section, 0), m_model->index(section, m_model->columnCount({}) - 1));
+            selectionModel->select(selection, QItemSelectionModel::Select);
+        }
     }
     if (m_menu) {
         m_menu->setContextObject(this->sender());
@@ -144,9 +161,25 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
             CopyData::instance().setData(type, m_model->data(selectionItem, Qt::UserRole), range, this);
             break;
         }
-        case Table::TypeFlag::Paste:
         case Table::TypeFlag::Insert:
         case Table::TypeFlag::Remove:
+            // 判断选中数据是否有效
+            if (contextObject == this->horizontalHeader() || contextObject == this->verticalHeader()) {
+                if (selectionItem.size() > 1) {
+                    auto count = contextObject == this->horizontalHeader() ? selectionItem.first().height()
+                                        : selectionItem.first().width();
+                    for (const auto &selection : selectionItem) {
+                        auto c = contextObject == this->horizontalHeader() ? selection.height() : selection.width();
+                        if (count != c) {
+                            QMessageBox::warning(this, "警告",
+                                                 "当前选定区域同时包含整行（或整列）单元格及单元格区域时，此命令无效。"
+                                                 "要么选定整行或整列，要么选定单元格区域。");
+                            return;
+                        }
+                    }
+                }
+            }
+        case Table::TypeFlag::Paste:
             if (m_commands.contains(type)) {
                 m_commands.value(type)->cmd(contextObject, selectionItem);
             }
