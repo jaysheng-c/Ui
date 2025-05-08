@@ -28,8 +28,8 @@ QWidget *TableDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem
 
 void TableDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
 {
-    if (auto edit = qobject_cast<QLineEdit *>(editor)) {
-        auto data = index.data(Qt::UserRole).value<TableData>();
+    if (auto *edit = qobject_cast<QLineEdit *>(editor)) {
+        const auto data = index.data(Qt::UserRole).value<TableData>();
         edit->setFont(data.data(TableData::Font).value<QFont>());
         edit->setAlignment(data.data(TableData::Align).value<Qt::Alignment>());
         edit->setStyleSheet(QString("color: %1;").arg(data.data(TableData::Foreground).value<QColor>().name()));

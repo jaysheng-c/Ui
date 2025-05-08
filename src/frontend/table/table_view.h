@@ -40,7 +40,7 @@ protected:
 
 
 protected slots:
-    void onExecMenu(const QPoint &pos);
+    void onExecMenu(const QPoint &pos) const;
     void onMenuTriggered(QObject *contextObject, Table::TypeFlag type);
 
 private:

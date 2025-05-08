@@ -46,9 +46,9 @@ TableView::TableView(QWidget *parent)
     setTableModel(new TableModel(ExpandType::Row, this));
 
     m_commands = {
-            { Table::TypeFlag::Insert, std::move(std::make_shared<InsertCmd>(this)) },
-            { Table::TypeFlag::Remove, std::move(std::make_shared<RemoveCmd>(this)) },
-            { Table::TypeFlag::Paste, std::move(std::make_shared<PasteCmd>(this)) },
+        {Table::TypeFlag::Insert, std::move(std::make_shared<InsertCmd>(this))},
+        {Table::TypeFlag::Remove, std::move(std::make_shared<RemoveCmd>(this))},
+        {Table::TypeFlag::Paste, std::move(std::make_shared<PasteCmd>(this))},
     };
 
     (void) connect(this->verticalHeader(), &QTableView::customContextMenuRequested, this, &TableView::onExecMenu);
@@ -107,33 +107,35 @@ void TableView::keyPressEvent(QKeyEvent *event)
     QTableView::keyPressEvent(event);
 }
 
-void TableView::onExecMenu(const QPoint &pos)
+void TableView::onExecMenu(const QPoint &pos) const
 {
-    auto selectionModel = this->selectionModel();
+    auto *selectionModel = this->selectionModel();
     auto selections = selectionModel->selection();
-    bool clearFlag { true };
+    bool clearFlag{true};
     if (this->sender() == this->horizontalHeader()) {
-        auto section = this->horizontalHeader()->logicalIndexAt(pos);
+        const int section = this->horizontalHeader()->logicalIndexAt(pos);
         // 判断是否为列选中且列选中区域为当前右键对应的列
-        for (const auto &selection : selections) {
+        for (const auto &selection: selections) {
             clearFlag = (selection.left() > section || selection.right() < section);
             clearFlag |= (selection.height() != this->model()->rowCount());
         }
         if (clearFlag) {
             selectionModel->clear();
-            QItemSelection selection(m_model->index(0, section), m_model->index(m_model->rowCount({}) - 1, section));
+            const QItemSelection selection(m_model->index(0, section),
+                                           m_model->index(m_model->rowCount({}) - 1, section));
             selectionModel->select(selection, QItemSelectionModel::Select);
         }
     } else if (this->sender() == this->verticalHeader()) {
-        auto section = this->verticalHeader()->logicalIndexAt(pos);
+        const int section = this->verticalHeader()->logicalIndexAt(pos);
         // 判断是否为列选中且列选中区域为当前右键对应的列
-        for (const auto &selection : selections) {
+        for (const auto &selection: selections) {
             clearFlag = (selection.top() > section || selection.bottom() < section);
             clearFlag |= (selection.width() != this->model()->columnCount());
         }
         if (clearFlag) {
             selectionModel->clear();
-            QItemSelection selection(m_model->index(section, 0), m_model->index(section, m_model->columnCount({}) - 1));
+            const QItemSelection selection(m_model->index(section, 0),
+                                           m_model->index(section, m_model->columnCount({}) - 1));
             selectionModel->select(selection, QItemSelectionModel::Select);
         }
     }
@@ -145,7 +147,7 @@ void TableView::onExecMenu(const QPoint &pos)
 
 void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
 {
-    auto selectionModel = this->selectionModel();
+    const auto *selectionModel = this->selectionModel();
     if (!selectionModel->hasSelection()) {
         return;
     }
@@ -157,7 +159,7 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
                 QMessageBox::warning(this, "警告", "无法对多重区域执行此操作！");
                 return;
             }
-            auto range = QVariant::fromValue(selectionItem.first());
+            const auto range = QVariant::fromValue(selectionItem.first());
             CopyData::instance().setData(type, m_model->data(selectionItem, Qt::UserRole), range, this);
             break;
         }
@@ -166,10 +168,11 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
             // 判断选中数据是否有效
             if (contextObject == this->horizontalHeader() || contextObject == this->verticalHeader()) {
                 if (selectionItem.size() > 1) {
-                    auto count = contextObject == this->horizontalHeader() ? selectionItem.first().height()
-                                        : selectionItem.first().width();
-                    for (const auto &selection : selectionItem) {
-                        auto c = contextObject == this->horizontalHeader() ? selection.height() : selection.width();
+                    const int count = contextObject == this->horizontalHeader() ? selectionItem.first().height()
+                                          : selectionItem.first().width();
+                    for (const auto &selection: selectionItem) {
+                        const int c = contextObject == this->horizontalHeader() ? selection.height()
+                                            : selection.width();
                         if (count != c) {
                             QMessageBox::warning(this, "警告",
                                                  "当前选定区域同时包含整行（或整列）单元格及单元格区域时，此命令无效。"

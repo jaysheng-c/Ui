@@ -18,7 +18,7 @@
 
 namespace {
 
-class Cmd : public QUndoCommand {
+class Cmd final : public QUndoCommand {
 public:
     struct Data {
         int begin = -1;

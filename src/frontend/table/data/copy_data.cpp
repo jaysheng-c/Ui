@@ -19,7 +19,7 @@ CopyData &CopyData::instance()
     return inst;
 }
 
-void CopyData::setData(Table::TypeFlag opt, const QVariant &data, const QVariant &range, TableView *table)
+void CopyData::setData(const Table::TypeFlag opt, const QVariant &data, const QVariant &range, TableView *table)
 {
     Q_ASSERT_X(table, "CopyData::setData", "table is nullptr");
     m_opt = opt;

@@ -18,7 +18,7 @@
 
 namespace {
 
-class Cmd : public QUndoCommand {
+class Cmd final : public QUndoCommand {
 public:
     struct Data {
         int begin = -1;
@@ -32,7 +32,7 @@ public:
     };
 
     enum Type { Column, Row, };
-    Cmd(TableView *table, QVariant &&old, QVariant &&cur, Type type)
+    Cmd(TableView *table, QVariant &&old, QVariant &&cur, const Type type)
             : QUndoCommand("remove"), m_table(table), m_old(std::move(old)), m_cur(std::move(cur)), m_type(type) {}
     void redo() override
     {
@@ -56,11 +56,11 @@ public:
         auto dataList = m_old.value<QVector<Data>>();
         switch (m_type) {
             case Column: {
-                int rowCount = m_table->model()->rowCount();
+                const int rowCount = m_table->model()->rowCount();
                 for (const auto &data: dataList) {
                     m_table->model()->insertColumns(data.begin, data.count);
                     for (auto i{0}; i < data.count; ++i) {
-                        int column = data.begin + i;
+                        const int column = data.begin + i;
                         for (auto row{0}; row < rowCount; ++row) {
                             const auto &index = m_table->model()->index(row, column);
                             m_table->model()->setData(index, data.data.at(row + rowCount * i), Qt::UserRole);
@@ -70,11 +70,11 @@ public:
                 break;
             }
             case Row: {
-                int columnCount = m_table->model()->columnCount();
+                const int columnCount = m_table->model()->columnCount();
                 for (const auto &data: dataList) {
                     m_table->model()->insertRows(data.begin, data.count);
                     for (auto i{0}; i < data.count; ++i) {
-                        int row = data.begin + i;
+                        const int row = data.begin + i;
                         for (auto column{0}; column < columnCount; ++column) {
                             const auto &index = m_table->model()->index(row, column);
                             m_table->model()->setData(index, data.data.at(column + columnCount * i), Qt::UserRole);
@@ -110,12 +110,12 @@ void RemoveCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
     if (contextObject == m_table->horizontalHeader()) {
         QVector<Cmd::Data> oldList, curList;
         for (const auto &item : selectionItem) {
-            int rowCount = m_table->model()->rowCount();
+            const int rowCount = m_table->model()->rowCount();
             curList.append(Cmd::Data{item.left(), item.width()});
 
             Cmd::Data data{item.left(), item.width(), QVariantList(item.width() * rowCount)};
             for (auto i {0}; i < data.count; ++i) {
-                int column = data.begin + i;
+                const int column = data.begin + i;
                 for (auto row {0}; row < rowCount; ++row) {
                     const auto &index = m_table->model()->index(row, column);
                     data.data[row + rowCount * i] = m_table->model()->data(index, Qt::UserRole);
@@ -126,15 +126,16 @@ void RemoveCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
         auto old = QVariant::fromValue(Smaller<Cmd::Data>()(oldList));
         auto cur = QVariant::fromValue(Greater<Cmd::Data>()(curList));
         return TableView::undoStack().push(new Cmd(m_table, std::move(old), std::move(cur), Cmd::Column));
-    } else if (contextObject == m_table->verticalHeader()) {
+    }
+    if (contextObject == m_table->verticalHeader()) {
         QVector<Cmd::Data> oldList, curList;
         for (const auto &item : selectionItem) {
-            int columnCount = m_table->model()->columnCount();
+            const int columnCount = m_table->model()->columnCount();
             curList.append(Cmd::Data{item.top(), item.height()});
 
             Cmd::Data data{item.top(), item.height(), QVariantList(item.height() * columnCount)};
             for (auto i {0}; i < data.count; ++i) {
-                int row = data.begin + i;
+                const int row = data.begin + i;
                 for (auto column {0}; column < columnCount; ++column) {
                     const auto &index = m_table->model()->index(row, column);
                     data.data[column + columnCount * i] = m_table->model()->data(index, Qt::UserRole);

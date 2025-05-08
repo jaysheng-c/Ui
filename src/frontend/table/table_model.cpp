@@ -75,9 +75,9 @@ QVariant TableModel::data(const QModelIndex &index, int role) const
     if (role == Qt::UserRole) {
         return QVariant::fromValue(m_data->at(index.row(), index.column()));
     }
-    auto dataType = QRoleToDataType.value(Qt::ItemDataRole(role), -1);
+    const int dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1);
     if (dataType != -1) {
-        return m_data->at(index.row(), index.column()).data(TableData::Type(dataType));
+        return m_data->at(index.row(), index.column()).data(static_cast<TableData::Type>(dataType));
     }
     return {};
 }
@@ -108,9 +108,9 @@ bool TableModel::setData(const QModelIndex &index, const QVariant &value, int ro
         emit dataChanged(index, index);
         return true;
     }
-    auto dataType = QRoleToDataType.value(Qt::ItemDataRole(role), -1);
+    const int dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1);
     if (dataType != -1) {
-        m_data->ref(index.row(), index.column()).setData(TableData::Type(dataType), value);
+        m_data->ref(index.row(), index.column()).setData(static_cast<TableData::Type>(dataType), value);
         return true;
     }
     return QAbstractItemModel::setData(index, value, role);
@@ -119,7 +119,7 @@ bool TableModel::setData(const QModelIndex &index, const QVariant &value, int ro
 bool TableModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     beginInsertRows(parent, position, position + rows - 1);
-    auto flag = m_data->insertRows(position, rows, DEFAULT_VALUE);
+    const bool flag = m_data->insertRows(position, rows, DEFAULT_VALUE);
     endInsertRows();
     return flag;
 }
@@ -127,7 +127,7 @@ bool TableModel::insertRows(int position, int rows, const QModelIndex &parent)
 bool TableModel::removeRows(int position, int rows, const QModelIndex &parent)
 {
     beginRemoveRows(parent, position, position + rows - 1);
-    auto flag = m_data->removeRows(position, rows);
+    const bool flag = m_data->removeRows(position, rows);
     endRemoveRows();
     if (flag) {
         beginResetModel();
@@ -139,7 +139,7 @@ bool TableModel::removeRows(int position, int rows, const QModelIndex &parent)
 bool TableModel::insertColumns(int position, int columns, const QModelIndex &parent)
 {
     beginInsertColumns(parent, position, position + columns - 1);
-    auto flag = m_data->insertColumns(position, columns, DEFAULT_VALUE);
+    const bool flag = m_data->insertColumns(position, columns, DEFAULT_VALUE);
     endInsertColumns();
     return flag;
 }
@@ -147,7 +147,7 @@ bool TableModel::insertColumns(int position, int columns, const QModelIndex &par
 bool TableModel::removeColumns(int position, int columns, const QModelIndex &parent)
 {
     beginRemoveColumns(parent, position, position + columns - 1);
-    auto flag = m_data->removeColumns(position, columns);
+    const bool flag = m_data->removeColumns(position, columns);
     endRemoveColumns();
     if (flag) {
         beginResetModel();

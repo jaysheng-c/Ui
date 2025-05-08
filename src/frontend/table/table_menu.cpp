@@ -44,7 +44,7 @@ void TableMenu::createAction(const TableMenu::Item &item, QMenu *parent)
     if (item.style != Item::Action) {
         return;
     }
-    auto action = new QAction(item.text, parent);
+    auto *action = new QAction(item.text, parent);
     action->setProperty("type", QVariant::fromValue(item.type));
 //    if (!item.icon.isNull()) {
 //        MenuInit::setActionIconStyle(action, item.icon, {42, 42});
@@ -62,7 +62,7 @@ void TableMenu::createItems(const TableMenu::Item &item, QMenu *parent)
         createAction(item, parent);
         return;
     }
-    auto menu = new QMenu(item.text, parent);
+    auto *menu = new QMenu(item.text, parent);
 //    if (!item.icon.isNull()) {
 //        MenuInit::setMenuIconStyle(menu, item.icon, {42, 42});
 //    }
@@ -77,7 +77,7 @@ void TableMenu::createItems(const TableMenu::Item &item, QMenu *parent)
 
 void TableMenu::onTriggered()
 {
-    auto type = this->sender()->property("type").value<Table::TypeFlag>();
+    const auto type = this->sender()->property("type").value<Table::TypeFlag>();
     emit triggered(m_contextObject, type);
     m_contextObject = nullptr;
 }

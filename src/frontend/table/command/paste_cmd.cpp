@@ -34,7 +34,7 @@ struct OptData {
     QVector<int> insertRows;
     QVector<int> insertColumns;
 };
-class CopyCmd : public QUndoCommand {
+class CopyCmd final : public QUndoCommand {
 public:
     CopyCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData, int role = Qt::UserRole)
         : QUndoCommand("copy_paste"), m_table(table), m_old(std::move(old)), m_cur(std::move(cur)),
@@ -102,7 +102,7 @@ private:
 
 class AddList {
 public:
-    void operator()(QVector<int> &list, int begin, int count)
+    void operator()(QVector<int> &list, const int begin, const int count) const
     {
         if (count > 0) {
             auto i = list.size();

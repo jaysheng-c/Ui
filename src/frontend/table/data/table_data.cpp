@@ -24,14 +24,14 @@ constexpr int UNDERLINE = 2;
 
 quint16 fontFamilyIndex(const QString &text, const QFontComboBox &combo = QFontComboBox())
 {
-    auto index = combo.findText(text);
+    const int index = combo.findText(text);
     if (index != -1 && index < combo.count()) {
         return index;
     }
     return 0;
 }
 
-QString fontFamilyString(int index, const QFontComboBox &combo = QFontComboBox())
+QString fontFamilyString(const int index, const QFontComboBox &combo = QFontComboBox())
 {
     if (index < 0 || index >= combo.count()) {
         return combo.itemText(0);
@@ -39,7 +39,7 @@ QString fontFamilyString(int index, const QFontComboBox &combo = QFontComboBox()
     return combo.itemText(index);
 }
 
-QVector<bool> fontType(int type)
+QVector<bool> fontType(const int type)
 {
     switch (type) {
         case TableData::Bold:                                           return {true, false, false};
@@ -61,10 +61,10 @@ TableData::FontType fontType(const QVector<bool> &types)
     type |= types.at(BOLD) ? TableData::Bold : TableData::None;
     type |= types.at(ITALIC) ? TableData::Italic : TableData::None;
     type |= types.at(UNDERLINE) ? TableData::Underline : TableData::None;
-    return TableData::FontType(type);
+    return static_cast<TableData::FontType>(type);
 }
 
-int toQtAlign(int align)
+int toQtAlign(const int align)
 {
     switch (align) {
         case TableData::Left:                           return Qt::AlignLeft;
@@ -89,7 +89,7 @@ int toQtAlign(int align)
 
 }
 
-int fromQtAlign(int align)
+int fromQtAlign(const int align)
 {
     switch (align) {
         case Qt::AlignLeft:                         return TableData::Left;
@@ -117,7 +117,7 @@ int fromQtAlign(int align)
 
 TableData::TableData(const QString &value)
         : m_value(value), m_display(value), m_align(VCenter | Left), m_foreground(4278190080), m_background(0),
-          m_fontType(None), m_fontSize(11), m_family(0)
+          m_family(0), m_fontType(None), m_fontSize(11)
 {
 
 }
@@ -146,7 +146,7 @@ TableData::TableData(TableData &&data) noexcept
     m_fontSize = data.m_fontSize;
 }
 
-QVariant TableData::data(TableData::Type type) const
+QVariant TableData::data(const TableData::Type type) const
 {
     switch (type) {
         case Real:          return m_value;
@@ -161,7 +161,7 @@ QVariant TableData::data(TableData::Type type) const
         case Font: {
             QFont font;
             font.setFamily(fontFamilyString(m_family));
-            auto list = fontType(m_fontType);
+            const auto list = fontType(m_fontType);
             font.setBold(list.at(0));
             font.setItalic(list.at(1));
             font.setUnderline(list.at(2));
@@ -172,7 +172,7 @@ QVariant TableData::data(TableData::Type type) const
     return {};
 }
 
-bool TableData::setData(TableData::Type type, const QVariant &data)
+bool TableData::setData(const TableData::Type type, const QVariant &data)
 {
     switch (type) {
         case Real:          m_value = data.toString();
@@ -181,7 +181,7 @@ bool TableData::setData(TableData::Type type, const QVariant &data)
         case Foreground:    m_foreground = data.value<QColor>().rgb(); break;
         case Background:    m_background = data.value<QBrush>().color().rgba(); break;
         case Font: {
-            auto font = data.value<QFont>();
+            const auto font = data.value<QFont>();
             m_family = fontFamilyIndex(font.family());
             m_fontType = fontType(QVector<bool>() << font.bold() << font.italic() << font.underline());
             m_fontSize = font.pointSize();
@@ -193,7 +193,7 @@ bool TableData::setData(TableData::Type type, const QVariant &data)
     return true;
 }
 
-bool TableData::setData(TableData::Type type, QVariant &&data)
+bool TableData::setData(const TableData::Type type, QVariant &&data)
 {
     switch (type) {
         case Real:          m_value = data.toString(); break;
@@ -202,7 +202,7 @@ bool TableData::setData(TableData::Type type, QVariant &&data)
         case Foreground:    m_foreground = data.value<QColor>().rgb(); break;
         case Background:    m_background = data.value<QBrush>().color().rgba(); break;
         case Font: {
-            auto font = data.value<QFont>();
+            const auto font = data.value<QFont>();
             m_family = fontFamilyIndex(font.family());
             m_fontType = fontType(QVector<bool>() << font.bold() << font.italic() << font.underline());
             m_fontSize = font.pointSize();
@@ -240,10 +240,10 @@ QByteArray TableData::serializeData(bool compress, int compressionLevel) const
     return serializedData;
 }
 
-bool TableData::deserializeData(const QByteArray &data, bool decompress)
+bool TableData::deserializeData(const QByteArray &data, const bool decompress)
 {
     auto decompressedData = decompress ? qUncompress(data) : data;
-    QBuffer buffer(const_cast<QByteArray *>(&decompressedData)); // QBuffer需要可修改的指针
+    QBuffer buffer(&decompressedData);
     if (buffer.open(QBuffer::ReadOnly)) {
         QDataStream in(&buffer);
         in >> *this;
@@ -265,7 +265,7 @@ bool TableData::equal(const TableData &other, const QVector<Type> &types) const
     return res;
 }
 
-bool TableData::equal(const TableData &other, TableData::Type type) const
+bool TableData::equal(const TableData &other, const TableData::Type type) const
 {
     switch (type) {
         case Real:          return m_value == other.m_value;
@@ -331,7 +331,7 @@ QDebug operator<<(QDebug debug, const TableData &obj)
     QColor background;
     background.setRgba(obj.m_background);
     debug.nospace() << "{\n [Real: " << obj.m_value << "]\n" << " [Display: " << obj.m_display << "]\n"
-                    << " [Align: " << Qt::AlignmentFlag(toQtAlign(obj.m_align)) << "]\n"
+                    << " [Align: " << static_cast<Qt::AlignmentFlag>(toQtAlign(obj.m_align)) << "]\n"
                     << " [Foreground: " << QColor(obj.m_foreground).name() << "]\n"
                     << " [Background: " << QBrush(background) << "]\n"
                     << " [Font(family:" << fontFamilyString(obj.m_family)
@@ -348,7 +348,7 @@ QDebug operator<<(QDebug debug, const TableData *obj)
         QColor background;
         background.setRgba(obj->m_background);
         debug.nospace() << "{\n [Real: " << obj->m_value << "]\n" << " [Display: " << obj->m_display << "]\n"
-                        << " [Align: " << Qt::AlignmentFlag(toQtAlign(obj->m_align)) << "]\n"
+                        << " [Align: " << static_cast<Qt::AlignmentFlag>(toQtAlign(obj->m_align)) << "]\n"
                         << " [Foreground: " << QColor(obj->m_foreground).name() << "]\n"
                         << " [Background: " << QBrush(background) << "]\n"
                         << " [Font(family:" << fontFamilyString(obj->m_family)

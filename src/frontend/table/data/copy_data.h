@@ -21,9 +21,9 @@
 namespace Table { enum class TypeFlag; }
 class TableView;
 
-class CopyData {
+class CopyData final {
 public:
-    virtual ~CopyData() = default;
+    ~CopyData() = default;
 
     static CopyData &instance();
 
