@@ -181,6 +181,12 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
                         }
                     }
                 }
+                const bool isInsert = type == Table::TypeFlag::Insert;
+                if (contextObject == this->horizontalHeader()) {
+                    type = isInsert ? Table::TypeFlag::InsertColumn : Table::TypeFlag::RemoveColumn;
+                } else {
+                    type = isInsert ? Table::TypeFlag::InsertRow : Table::TypeFlag::RemoveRow;
+                }
             }
         case Table::TypeFlag::Paste:
             if (m_commands.contains(type)) {
