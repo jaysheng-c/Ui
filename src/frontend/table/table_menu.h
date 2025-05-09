@@ -28,14 +28,7 @@ public:
     void execMenu(const QPoint &pos);
     void setContextObject(QObject *object) { m_contextObject = object; }
 private:
-    struct Item {
-        enum {Action, Menu};
-        int style = Action;
-        Table::Type type = Table::TypeFlag::None;
-        QString text;
-        QIcon icon;
-        QVector<Item> items;
-    };
+    struct Item;
     void createAction(const Item &item, QMenu *parent);
     void createItems(const Item &item, QMenu *parent);
 

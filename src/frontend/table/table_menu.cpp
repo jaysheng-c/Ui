@@ -12,6 +12,15 @@
 #include "table_menu.h"
 #include "table_view.h"
 
+struct TableMenu::Item {
+    enum {Action, Menu};
+    int style = Action;
+    Table::Type type = Table::TypeFlag::None;
+    QString text;
+    QIcon icon;
+    QVector<Item> items;
+};
+
 TableMenu::TableMenu(TableView *table)
     : QMenu(table), m_tableView(table), m_contextObject(nullptr)
 {

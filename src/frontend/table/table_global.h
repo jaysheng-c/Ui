@@ -23,6 +23,15 @@ enum class TypeFlag {
     Insert,
     Remove,
     Clear,
+    InsertColumn,
+    InsertRow,
+    RemoveColumn,
+    RemoveRow,
+
+    MoveLeft,
+    MoveUp,
+    MoveRight,
+    MoveDown,
 };
 Q_DECLARE_FLAGS(Type, TypeFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(Type)
