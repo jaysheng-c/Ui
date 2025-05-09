@@ -24,6 +24,8 @@
 #include "table_model.h"
 #include "table_delegate.h"
 #include "table_menu.h"
+#include "ui/insert_child_dlg.h"
+#include "ui/remove_child_dlg.h"
 
 #include "data/copy_data.h"
 #include "command/insert_cmd.h"
@@ -187,13 +189,23 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
                 } else {
                     type = isInsert ? Table::TypeFlag::InsertRow : Table::TypeFlag::RemoveRow;
                 }
+            } else if (contextObject == this) {
+                if (type == Table::TypeFlag::Insert) {
+                    InsertChildDlg dlg(this);
+                    type = static_cast<Table::TypeFlag>(dlg.exec());
+                } else {
+                    RemoveChildDlg dlg(this);
+                    type = static_cast<Table::TypeFlag>(dlg.exec());
+                }
+                if (type == Table::TypeFlag::None) {
+                    return;
+                }
             }
         case Table::TypeFlag::Paste:
+        case Table::TypeFlag::Clear:
             if (m_commands.contains(type)) {
                 m_commands.value(type)->cmd(contextObject, selectionItem);
             }
-            break;
-        case Table::TypeFlag::Clear:
         default:
             break;
     }

@@ -13,6 +13,8 @@ set(TableHeader
         ${CMAKE_CURRENT_LIST_DIR}/table_model.h
         ${CMAKE_CURRENT_LIST_DIR}/table_view.h
         ${CMAKE_CURRENT_LIST_DIR}/table_menu.h
+        ${CMAKE_CURRENT_LIST_DIR}/ui/insert_child_dlg.h
+        ${CMAKE_CURRENT_LIST_DIR}/ui/remove_child_dlg.h
 )
 
 set(TableSource
@@ -27,6 +29,8 @@ set(TableSource
         ${CMAKE_CURRENT_LIST_DIR}/table_model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/table_view.cpp
         ${CMAKE_CURRENT_LIST_DIR}/table_menu.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/ui/insert_child_dlg.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/ui/remove_child_dlg.cpp
 )
 
 set(TableFile
