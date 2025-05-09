@@ -12,6 +12,7 @@
 #ifndef TABLE_CMD_H
 #define TABLE_CMD_H
 
+#include <QMap>
 #include <QVector>
 
 class TableView;
@@ -50,5 +51,52 @@ public:
         return d;
     }
 };
+
+// 创建反射类的工厂
+class ObjectFactory {
+public:
+    ObjectFactory() = default;
+    virtual ~ObjectFactory() = default;
+    virtual TableCmd *newInstance(TableView *parent) = 0;
+};
+
+// 反射管理类
+class Reflector {
+public:
+    Reflector() = default;
+    ~Reflector();
+    void Register(const QString &name, ObjectFactory *obj);
+    TableCmd *GetNewInstance(const QString &name, TableView *parent) const;
+    static Reflector &GetInstance();
+private:
+    QMap<QString, ObjectFactory *> m_objectFactories;
+};
+
+// 获取已注册反射类实列对象
+template<class T>
+std::shared_ptr<T> GetNewCmdInstance(const QString &name, TableView *parent)
+{
+    return std::shared_ptr<T>(Reflector::GetInstance().GetNewInstance(name, parent));
+}
+
+// 注册反射类宏
+#define REFLECT(name)                                   \
+class ObjectFactory_##name : public ObjectFactory {     \
+public:                                                 \
+    ObjectFactory_##name() {}                           \
+    virtual ~ObjectFactory_##name() {}                  \
+    TableCmd *newInstance(TableView *parent) override   \
+    {                                                   \
+        return new name(parent);                        \
+    }                                                   \
+protected:                                              \
+};                                                      \
+class Register_##name {                                 \
+public:                                                                             \
+    Register_##name() {                                                             \
+        Reflector::GetInstance().Register(#name, new ObjectFactory_##name());       \
+    }                                                                               \
+};                                                                                  \
+Register_##name register_##name;
 
 #endif //TABLE_CMD_H

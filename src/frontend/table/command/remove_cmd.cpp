@@ -16,6 +16,8 @@
 
 #include "table/table_view.h"
 
+REFLECT(RemoveCmd)
+
 namespace {
 
 class Cmd final : public QUndoCommand {

@@ -28,9 +28,7 @@
 #include "ui/remove_child_dlg.h"
 
 #include "data/copy_data.h"
-#include "command/insert_cmd.h"
-#include "command/remove_cmd.h"
-#include "command/paste_cmd.h"
+#include "command/table_cmd.h"
 
 QUndoStack TableView::s_stack;
 
@@ -48,9 +46,9 @@ TableView::TableView(QWidget *parent)
     setTableModel(new TableModel(ExpandType::Row, this));
 
     m_commands = {
-        {Table::TypeFlag::Insert, std::move(std::make_shared<InsertCmd>(this))},
-        {Table::TypeFlag::Remove, std::move(std::make_shared<RemoveCmd>(this))},
-        {Table::TypeFlag::Paste, std::move(std::make_shared<PasteCmd>(this))},
+        {Table::TypeFlag::Insert, GetNewCmdInstance<TableCmd>("InsertCmd", this)},
+        {Table::TypeFlag::Remove, GetNewCmdInstance<TableCmd>("RemoveCmd", this)},
+        {Table::TypeFlag::Paste, GetNewCmdInstance<TableCmd>("PasteCmd", this)},
     };
 
     (void) connect(this->verticalHeader(), &QTableView::customContextMenuRequested, this, &TableView::onExecMenu);

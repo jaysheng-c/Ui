@@ -14,7 +14,6 @@
 
 #include <QPointer>
 #include <QTableView>
-#include "command/table_cmd.h"
 
 namespace Table {
 enum class TypeFlag;
@@ -23,6 +22,7 @@ enum class TypeFlag;
 class QUndoStack;
 class TableMenu;
 class TableModel;
+class TableCmd;
 
 class TableView : public QTableView {
 Q_OBJECT

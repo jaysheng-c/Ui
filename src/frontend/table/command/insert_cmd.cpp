@@ -16,6 +16,8 @@
 
 #include "table/table_view.h"
 
+REFLECT(InsertCmd)
+
 namespace {
 
 class Cmd final : public QUndoCommand {

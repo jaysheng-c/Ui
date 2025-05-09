@@ -19,6 +19,8 @@
 #include "table/data/copy_data.h"
 #include "table/table_view.h"
 
+REFLECT(PasteCmd)
+
 namespace {
 struct Range {
     int left;

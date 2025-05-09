@@ -2,6 +2,7 @@
 
 set(TableHeader
         ${CMAKE_CURRENT_LIST_DIR}/table_global.h
+        ${CMAKE_CURRENT_LIST_DIR}/command/table_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/insert_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/remove_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/paste_cmd.h
@@ -18,6 +19,7 @@ set(TableHeader
 )
 
 set(TableSource
+        ${CMAKE_CURRENT_LIST_DIR}/command/table_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/insert_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/remove_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/paste_cmd.cpp
