@@ -1,24 +1,24 @@
 /**
   ********************************************************************************
-  * @file           : remove_cmd.h
+  * @file           : remove_column_cmd.h
   * @author         : jaysheng
   * @brief          : None
   * @attention      : None
-  * @date           : 2025/04/23
+  * @date           : 2025/05/10
   * @version        : 1.0
   ********************************************************************************
   */
 
-#ifndef REMOVE_CMD_H
-#define REMOVE_CMD_H
+#ifndef REMOVE_COLUMN_CMD_H
+#define REMOVE_COLUMN_CMD_H
 
 #include "table_cmd.h"
 
-class RemoveCmd : public TableCmd {
+class RemoveColumnCmd final : public TableCmd {
 public:
-    explicit RemoveCmd(TableView *table);
+    explicit RemoveColumnCmd(TableView *table);
     void cmd(QObject *contextObject, const QItemSelection &selectionItem) override;
 };
 
 
-#endif //REMOVE_CMD_H
+#endif //REMOVE_COLUMN_CMD_H
