@@ -119,7 +119,7 @@ public:
     }
 };
 
-class TableData {
+class TableDataAndRange {
 public:
     DataPair operator()(const QVector<Range> &origin, const TableView *table, int role) const
     {
@@ -179,7 +179,7 @@ void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
     insertColumns = Smaller<int>()(insertColumns);
 
     // 获取旧数据
-    auto [preSelection, preData] = TableData()(pasteSelection, m_table, Qt::UserRole);
+    auto [preSelection, preData] = TableDataAndRange()(pasteSelection, m_table, Qt::UserRole);
 
     auto cur = QVariant::fromValue(Data{pasteSelection, copyData});
     auto old = QVariant::fromValue(Data{preSelection, preData});
