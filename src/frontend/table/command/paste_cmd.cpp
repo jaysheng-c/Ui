@@ -19,6 +19,7 @@
 REFLECT(PasteCmd)
 
 namespace {
+
 struct Range {
     int left;
     int right;
@@ -100,7 +101,6 @@ private:
     int m_role;
 };
 
-
 class AddList {
 public:
     void operator()(QVector<int> &list, const int begin, const int count) const
@@ -156,9 +156,12 @@ PasteCmd::PasteCmd(TableView *table) : TableCmd(table)
 void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
 {
     Q_UNUSED(contextObject)
-    auto model = m_table->model();
-    auto copyData = CopyData::instance().data<QVariantList>();
-    auto copyRange = CopyData::instance().range<QItemSelectionRange>();
+    const auto copyData = CopyData::instance().data<QVariantList>();
+    const auto copyRange = CopyData::instance().range<QItemSelectionRange>();
+    const auto *model = m_table->model();
+    if (copyData.isEmpty()) {
+        return;
+    }
 
     QVector<Range> pasteSelection(selectionItem.size());
     QVector<int> insertRows, insertColumns;
@@ -185,5 +188,5 @@ void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
     auto old = QVariant::fromValue(Data{preSelection, preData});
 
     TableView::undoStack().push(new CopyCmd(m_table, std::move(old), std::move(cur),
-                                            OptData{std::move(insertRows), std::move(insertColumns)}));
+                                            OptData{std::move(insertRows), std::move(insertColumns)}, Qt::UserRole));
 }
