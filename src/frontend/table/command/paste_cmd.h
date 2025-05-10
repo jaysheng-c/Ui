@@ -13,19 +13,11 @@
 #define PASTE_CMD_H
 
 #include "table_cmd.h"
-#include "global/macro.h"
 
-namespace { struct Range; }
-
-
-class PasteCmd : public TableCmd {
+class PasteCmd final : public TableCmd {
 public:
-    using DataPair = QPair<QVector<Range>, QVariantList>;
     explicit PasteCmd(TableView *table);
     void cmd(QObject *contextObject, const QItemSelection &selectionItem) override;
-
-protected:
-    NODISCARD DataPair data(const QVector<Range> &origin, int role) const;
 };
 
 

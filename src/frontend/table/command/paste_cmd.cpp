@@ -11,10 +11,7 @@
 
 #include "paste_cmd.h"
 
-#include <QHeaderView>
 #include <QUndoCommand>
-#include <QVariant>
-#include <QItemSelectionRange>
 
 #include "table/data/copy_data.h"
 #include "table/table_view.h"
@@ -36,6 +33,8 @@ struct OptData {
     QVector<int> insertRows;
     QVector<int> insertColumns;
 };
+using DataPair = QPair<QVector<Range>, QVariantList>;
+
 class CopyCmd final : public QUndoCommand {
 public:
     CopyCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData, int role = Qt::UserRole)
@@ -107,16 +106,43 @@ public:
     void operator()(QVector<int> &list, const int begin, const int count) const
     {
         if (count > 0) {
-            auto i = list.size();
+            qsizetype i = list.size();
             list.resize(i + count, -1);
             for (int j {0}; j < count; ++j) {
-                auto v = begin + j;
+                int v = begin + j;
                 if (!list.contains(v)) {
                     list[i + j] = v;
                 }
             }
             list.removeAll(-1);
         }
+    }
+};
+
+class TableData {
+public:
+    DataPair operator()(const QVector<Range> &origin, const TableView *table, int role) const
+    {
+        QVariantList data;
+        QItemSelection itemSelection(origin.size());
+        QVector<Range> itemRanges(origin.size());
+
+        auto model = table->model();
+        // 计算需要获取的数据大小
+        for (qsizetype i {0}; i < origin.size(); ++i) {
+            const auto &range = origin.at(i);
+            int right = range.right < model->columnCount() ? range.right : model->columnCount() - 1;
+            int bottom = range.bottom < model->rowCount() ? range.bottom : model->rowCount() - 1;
+            itemSelection[i] = {model->index(range.top, range.left), model->index(bottom, right)};
+            itemRanges[i] = {range.left, right, range.top, bottom};
+        }
+        // 获取旧数据
+        const auto &indexes = itemSelection.indexes();
+        data.resize(indexes.size());
+        for (qsizetype i {0}; i < indexes.size(); ++i) {
+            data[i] = model->data(indexes.at(i), role);
+        }
+        return {itemRanges, data};
     }
 };
 
@@ -136,11 +162,11 @@ void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
 
     QVector<Range> pasteSelection(selectionItem.size());
     QVector<int> insertRows, insertColumns;
-    AddList addList;
     // 计算获得待处理的区域
     for (qsizetype i {0}; i < selectionItem.size(); ++i) {
+        AddList addList;
         const auto &topLeft = selectionItem.at(i).topLeft();
-        Range range{topLeft.column(), topLeft.column() + copyRange.width() - 1,
+        const Range range{topLeft.column(), topLeft.column() + copyRange.width() - 1,
                     topLeft.row(), topLeft.row() + copyRange.height() - 1};
 
         pasteSelection[i] = range;
@@ -153,35 +179,11 @@ void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
     insertColumns = Smaller<int>()(insertColumns);
 
     // 获取旧数据
-    auto [preSelection, preData] = data(pasteSelection, Qt::UserRole);
+    auto [preSelection, preData] = TableData()(pasteSelection, m_table, Qt::UserRole);
 
     auto cur = QVariant::fromValue(Data{pasteSelection, copyData});
     auto old = QVariant::fromValue(Data{preSelection, preData});
 
     TableView::undoStack().push(new CopyCmd(m_table, std::move(old), std::move(cur),
                                             OptData{std::move(insertRows), std::move(insertColumns)}));
-}
-
-PasteCmd::DataPair PasteCmd::data(const QVector<Range> &origin, int role) const
-{
-    QVariantList data;
-    QItemSelection itemSelection(origin.size());
-    QVector<Range> itemRanges(origin.size());
-
-    auto model = m_table->model();
-    // 计算需要获取的数据大小
-    for (qsizetype i {0}; i < origin.size(); ++i) {
-        const auto &range = origin.at(i);
-        int right = range.right < model->columnCount() ? range.right : model->columnCount() - 1;
-        int bottom = range.bottom < model->rowCount() ? range.bottom : model->rowCount() - 1;
-        itemSelection[i] = {model->index(range.top, range.left), model->index(bottom, right)};
-        itemRanges[i] = {range.left, right, range.top, bottom};
-    }
-    // 获取旧数据
-    const auto &indexes = itemSelection.indexes();
-    data.resize(indexes.size());
-    for (qsizetype i {0}; i < indexes.size(); ++i) {
-        data[i] = model->data(indexes.at(i), role);
-    }
-    return {itemRanges, data};
 }
