@@ -46,9 +46,16 @@ TableView::TableView(QWidget *parent)
     setTableModel(new TableModel(ExpandType::Row, this));
 
     m_commands = {
-        {Table::TypeFlag::Insert, GetNewCmdInstance<TableCmd>("InsertCmd", this)},
-        {Table::TypeFlag::Remove, GetNewCmdInstance<TableCmd>("RemoveCmd", this)},
+        {Table::TypeFlag::InsertRow, GetNewCmdInstance<TableCmd>("InsertRowCmd", this)},
+        {Table::TypeFlag::InsertColumn, GetNewCmdInstance<TableCmd>("InsertColumnCmd", this)},
+        {Table::TypeFlag::RemoveRow, GetNewCmdInstance<TableCmd>("RemoveRowCmd", this)},
+        {Table::TypeFlag::RemoveColumn, GetNewCmdInstance<TableCmd>("RemoveColumnCmd", this)},
         {Table::TypeFlag::Paste, GetNewCmdInstance<TableCmd>("PasteCmd", this)},
+        {Table::TypeFlag::Clear, GetNewCmdInstance<TableCmd>("ClearCmd", this)},
+        {Table::TypeFlag::MoveLeft, GetNewCmdInstance<TableCmd>("MoveLeftCmd", this)},
+        {Table::TypeFlag::MoveUp, GetNewCmdInstance<TableCmd>("MoveUpCmd", this)},
+        {Table::TypeFlag::MoveRight, GetNewCmdInstance<TableCmd>("MoveRightCmd", this)},
+        {Table::TypeFlag::MoveDown, GetNewCmdInstance<TableCmd>("MoveDownCmd", this)},
     };
 
     (void) connect(this->verticalHeader(), &QTableView::customContextMenuRequested, this, &TableView::onExecMenu);
@@ -196,13 +203,14 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
                     type = static_cast<Table::TypeFlag>(dlg.exec());
                 }
                 if (type == Table::TypeFlag::None) {
+                    qInfo() << "用户取消[Remove/Insert]操作！";
                     return;
                 }
             }
         case Table::TypeFlag::Paste:
         case Table::TypeFlag::Clear:
-            if (m_commands.contains(type)) {
-                m_commands.value(type)->cmd(contextObject, selectionItem);
+            if (const auto func = m_commands.value(type, nullptr)) {
+                func->cmd(contextObject, selectionItem);
             }
         default:
             break;
