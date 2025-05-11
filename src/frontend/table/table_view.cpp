@@ -167,7 +167,7 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
                 return;
             }
             const auto &selection = selectionItem.first();
-            constexpr auto copyType = selection.width() == m_model->columnCount({}) ? CopyData::Row
+            const auto copyType = selection.width() == m_model->columnCount({}) ? CopyData::Row
                         : (selection.height() == m_model->rowCount({}) ? CopyData::Column : CopyData::Cell);
             const auto range = QVariant::fromValue(selection);
             CopyData::instance().setData(type, copyType, m_model->data(selectionItem, Qt::UserRole), range, this);
