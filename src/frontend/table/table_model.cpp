@@ -167,10 +167,10 @@ QVariant TableModel::data(const QItemSelection &selection, int role) const
             }
         }
     } else {
-        auto dataType = QRoleToDataType.value(Qt::ItemDataRole(role), -1);
+        auto dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1);
         for (const auto &item: selection) {
             for (const auto &index: item.indexes()) {
-                d[i++] = m_data->at(index.row(), index.column()).data(TableData::Type(dataType));
+                d[i++] = m_data->at(index.row(), index.column()).data(static_cast<TableData::Type>(dataType));
             }
         }
     }
