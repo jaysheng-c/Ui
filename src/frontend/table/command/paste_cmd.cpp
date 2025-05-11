@@ -38,7 +38,7 @@ using DataPair = QPair<QVector<Range>, QVariantList>;
 
 class CopyCmd final : public QUndoCommand {
 public:
-    CopyCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData, int role = Qt::UserRole)
+    CopyCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData, const int role = Qt::UserRole)
         : QUndoCommand("copy_paste"), m_table(table), m_old(std::move(old)), m_cur(std::move(cur)),
           m_optData(optData), m_role(role) {}
 
@@ -46,12 +46,12 @@ public:
     {
         // 判断是否需要插入行或列
         insert();
-        auto data = m_cur.value<Data>();
-        for (const auto &range : data.ranges) {
+        auto [ranges, values] = m_cur.value<Data>();
+        for (const auto &[left, right, top, bottom] : ranges) {
             qsizetype i = 0;
-            for (auto row{range.top}; row <= range.bottom; ++row) {
-                for (auto column{range.left}; column <= range.right; ++column) {
-                    m_table->model()->setData(m_table->model()->index(row, column), data.values.at(i++), m_role);
+            for (int row{top}; row <= bottom; ++row) {
+                for (int column{left}; column <= right; ++column) {
+                    m_table->model()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
                 }
             }
         }
@@ -60,12 +60,12 @@ public:
     void undo() override
     {
         remove();
-        auto data = m_old.value<Data>();
-        for (const auto &range : data.ranges) {
+        auto [ranges, values] = m_old.value<Data>();
+        for (const auto &[left, right, top, bottom] : ranges) {
             qsizetype i = 0;
-            for (auto row{range.top}; row <= range.bottom; ++row) {
-                for (auto column{range.left}; column <= range.right; ++column) {
-                    m_table->model()->setData(m_table->model()->index(row, column), data.values.at(i++), m_role);
+            for (int row{top}; row <= bottom; ++row) {
+                for (int column{left}; column <= right; ++column) {
+                    m_table->model()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
                 }
             }
         }
@@ -106,7 +106,7 @@ public:
     void operator()(QVector<int> &list, const int begin, const int count) const
     {
         if (count > 0) {
-            qsizetype i = list.size();
+            const qsizetype i = list.size();
             list.resize(i + count, -1);
             for (int j {0}; j < count; ++j) {
                 int v = begin + j;
@@ -121,20 +121,20 @@ public:
 
 class TableDataAndRange {
 public:
-    DataPair operator()(const QVector<Range> &origin, const TableView *table, int role) const
+    DataPair operator()(const QVector<Range> &origin, const TableView *table, const int role) const
     {
         QVariantList data;
         QItemSelection itemSelection(origin.size());
         QVector<Range> itemRanges(origin.size());
 
-        auto model = table->model();
+        const auto *model = table->model();
         // 计算需要获取的数据大小
         for (qsizetype i {0}; i < origin.size(); ++i) {
-            const auto &range = origin.at(i);
-            int right = range.right < model->columnCount() ? range.right : model->columnCount() - 1;
-            int bottom = range.bottom < model->rowCount() ? range.bottom : model->rowCount() - 1;
-            itemSelection[i] = {model->index(range.top, range.left), model->index(bottom, right)};
-            itemRanges[i] = {range.left, right, range.top, bottom};
+            auto [left, right, top, bottom] = origin.at(i);
+            right = right < model->columnCount() ? right : model->columnCount() - 1;
+            bottom = bottom < model->rowCount() ? bottom : model->rowCount() - 1;
+            itemSelection[i] = {model->index(top, left), model->index(bottom, right)};
+            itemRanges[i] = {left, right, top, bottom};
         }
         // 获取旧数据
         const auto &indexes = itemSelection.indexes();
