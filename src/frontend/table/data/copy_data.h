@@ -12,7 +12,6 @@
 #ifndef UI_COPY_DATA_H
 #define UI_COPY_DATA_H
 
-#include <QList>
 #include <QVariant>
 #include <QPointer>
 
@@ -23,6 +22,7 @@ class TableView;
 
 class CopyData final {
 public:
+    enum Type { None, Cell, Column, Row };
     ~CopyData() = default;
 
     static CopyData &instance();
@@ -35,8 +35,9 @@ public:
 
     NODISCARD const QPointer<TableView> &sourceTable() const { return m_table; }
     NODISCARD Table::TypeFlag opt() const { return m_opt; }
+    NODISCARD Type copyType() const { return m_copyType; }
 
-    void setData(Table::TypeFlag opt, const QVariant &data, const QVariant &range, TableView *table);
+    void setData(Table::TypeFlag opt, Type copyTyp, const QVariant &data, const QVariant &range, TableView *table);
 
     void clear();
 
@@ -52,6 +53,7 @@ protected:
     QVariant m_range;
     QPointer<TableView> m_table;
     Table::TypeFlag m_opt;
+    Type m_copyType = None;
 };
 
 

@@ -166,8 +166,11 @@ void TableView::onMenuTriggered(QObject *contextObject, Table::TypeFlag type)
                 QMessageBox::warning(this, "警告", "无法对多重区域执行此操作！");
                 return;
             }
-            const auto range = QVariant::fromValue(selectionItem.first());
-            CopyData::instance().setData(type, m_model->data(selectionItem, Qt::UserRole), range, this);
+            const auto &selection = selectionItem.first();
+            constexpr auto copyType = selection.width() == m_model->columnCount({}) ? CopyData::Row
+                        : (selection.height() == m_model->rowCount({}) ? CopyData::Column : CopyData::Cell);
+            const auto range = QVariant::fromValue(selection);
+            CopyData::instance().setData(type, copyType, m_model->data(selectionItem, Qt::UserRole), range, this);
             break;
         }
         case Table::TypeFlag::Insert:
