@@ -23,7 +23,7 @@ class TableView;
 class CopyData final {
 public:
     enum Type { None, Cell, Column, Row };
-    ~CopyData() = default;
+    ~CopyData();
 
     static CopyData &instance();
 

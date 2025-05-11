@@ -101,14 +101,17 @@ void TableView::mousePressEvent(QMouseEvent *event)
 void TableView::keyPressEvent(QKeyEvent *event)
 {
     if (event->modifiers() & Qt::ControlModifier) {
-        if (event->key() == Qt::Key_Z && s_stack.canUndo()) {
-            s_stack.undo();
-        } else if (event->key() == Qt::Key_Y && s_stack.canRedo()) {
-            s_stack.redo();
-        } else if (event->key() == Qt::Key_C || event->key() == Qt::Key_X) {
-            onMenuTriggered(this, event->key() == Qt::Key_C ? Table::TypeFlag::Copy : Table::TypeFlag::Cut);
-        } else if (event->key() == Qt::Key_V) {
-            onMenuTriggered(this, Table::TypeFlag::Paste);
+        switch (event->key()) {
+            case Qt::Key_Z:
+                if (s_stack.canUndo()) return s_stack.undo();
+                break;
+            case Qt::Key_Y:
+                if (s_stack.canRedo()) return s_stack.redo();
+                break;
+            case Qt::Key_C: return onMenuTriggered(this, Table::TypeFlag::Copy);
+            case Qt::Key_X: return onMenuTriggered(this, Table::TypeFlag::Cut);
+            case Qt::Key_V: return onMenuTriggered(this, Table::TypeFlag::Paste);
+            default: break;
         }
     }
     QTableView::keyPressEvent(event);
