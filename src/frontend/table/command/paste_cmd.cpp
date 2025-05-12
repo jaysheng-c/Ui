@@ -11,43 +11,55 @@
 
 #include "paste_cmd.h"
 
+#include <QApplication>
+#include <QClipboard>
 #include <QUndoCommand>
 
+#include "table/table_global.h"
 #include "table/data/copy_data.h"
 #include "table/table_view.h"
 
 REFLECT(PasteCmd)
 
 namespace {
-
 struct Range {
     int left;
     int right;
     int top;
     int bottom;
+    friend QDebug operator<<(QDebug debug, const Range &range)
+    {
+        debug << "left:" << range.left << ",right:" << range.right << ",top:" << range.top << ",bottom:" << range.bottom;
+        return debug;
+    }
 };
+
 struct Data {
     QVector<Range> ranges;
     QVariantList values;
 };
+
 struct OptData {
     QVector<int> insertRows;
     QVector<int> insertColumns;
 };
+
 using DataPair = QPair<QVector<Range>, QVariantList>;
 
-class CopyCmd final : public QUndoCommand {
+class CopyCmd : public QUndoCommand {
 public:
     CopyCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData, const int role = Qt::UserRole)
         : QUndoCommand("copy_paste"), m_table(table), m_old(std::move(old)), m_cur(std::move(cur)),
-          m_optData(optData), m_role(role) {}
+          m_optData(optData), m_role(role)
+    {
+    }
 
     void redo() override
     {
         // 判断是否需要插入行或列
         insert();
         auto [ranges, values] = m_cur.value<Data>();
-        for (const auto &[left, right, top, bottom] : ranges) {
+        for (const auto [left, right, top, bottom]: ranges) {
             qsizetype i = 0;
             for (int row{top}; row <= bottom; ++row) {
                 for (int column{left}; column <= right; ++column) {
@@ -61,7 +73,7 @@ public:
     {
         remove();
         auto [ranges, values] = m_old.value<Data>();
-        for (const auto &[left, right, top, bottom] : ranges) {
+        for (const auto [left, right, top, bottom]: ranges) {
             qsizetype i = 0;
             for (int row{top}; row <= bottom; ++row) {
                 for (int column{left}; column <= right; ++column) {
@@ -70,7 +82,8 @@ public:
             }
         }
     }
-private:
+
+protected:
     void insert()
     {
         if (!m_optData.insertColumns.isEmpty()) {
@@ -82,6 +95,7 @@ private:
                                          static_cast<int>(m_optData.insertRows.size()));
         }
     }
+
     void remove()
     {
         if (!m_optData.insertColumns.isEmpty()) {
@@ -93,12 +107,21 @@ private:
                                          static_cast<int>(m_optData.insertRows.size()));
         }
     }
+
     TableView *m_table;
     QVariant m_old;
     QVariant m_cur;
 
     OptData m_optData;
     int m_role;
+};
+
+class CutCmd final : public CopyCmd {
+public:
+    CutCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData)
+        : CopyCmd(table, std::move(old), std::move(cur), std::move(optData))
+    {
+    }
 };
 
 class AddList {
@@ -108,7 +131,7 @@ public:
         if (count > 0) {
             const qsizetype i = list.size();
             list.resize(i + count, -1);
-            for (int j {0}; j < count; ++j) {
+            for (int j{0}; j < count; ++j) {
                 int v = begin + j;
                 if (!list.contains(v)) {
                     list[i + j] = v;
@@ -121,7 +144,11 @@ public:
 
 class TableDataAndRange {
 public:
-    DataPair operator()(const QVector<Range> &origin, const TableView *table, const int role) const
+    explicit TableDataAndRange(const int role) : m_role(role)
+    {
+    }
+
+    DataPair operator()(const QVector<Range> &origin, const TableView *table) const
     {
         QVariantList data;
         QItemSelection itemSelection(origin.size());
@@ -129,7 +156,7 @@ public:
 
         const auto *model = table->model();
         // 计算需要获取的数据大小
-        for (qsizetype i {0}; i < origin.size(); ++i) {
+        for (qsizetype i{0}; i < origin.size(); ++i) {
             auto [left, right, top, bottom] = origin.at(i);
             right = right < model->columnCount() ? right : model->columnCount() - 1;
             bottom = bottom < model->rowCount() ? bottom : model->rowCount() - 1;
@@ -139,38 +166,92 @@ public:
         // 获取旧数据
         const auto &indexes = itemSelection.indexes();
         data.resize(indexes.size());
-        for (qsizetype i {0}; i < indexes.size(); ++i) {
-            data[i] = model->data(indexes.at(i), role);
+        for (qsizetype i{0}; i < indexes.size(); ++i) {
+            data[i] = model->data(indexes.at(i), m_role);
         }
         return {itemRanges, data};
     }
-};
 
+private:
+    int m_role;
+};
 }
 
 PasteCmd::PasteCmd(TableView *table) : TableCmd(table)
 {
-
 }
 
 void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
 {
     Q_UNUSED(contextObject)
+    if (!CopyData::instance().range<QItemSelectionRange>().isEmpty()) {
+        // 系统内部的复制、剪切操作
+        tableCmd(selectionItem);
+    } else if (const auto copyText = QApplication::clipboard()->text(); !copyText.isEmpty()) {
+        // 系统外部的复制剪切操作
+        // 获得复制的数据
+        const auto rowData = copyText.split('\n');
+        const qsizetype rowCount = rowData.size();
+        qsizetype columnCount = 0;
+        QMap<qsizetype, QStringList> colDataMap;
+        for (qsizetype i{0}; i < rowData.size(); ++i) {
+            colDataMap[i] = rowData.at(i).split('\t');
+            columnCount = qMax(columnCount, colDataMap.value(i).size());
+        }
+        QList<QVariant> copyData(rowCount * columnCount, "");
+        auto it = copyData.begin();
+        for (qsizetype i{0}; i < rowCount; ++i) {
+            it = std::move(colDataMap[i].begin(), colDataMap[i].end(), it);
+        }
+        if (copyData.isEmpty()) {
+            return;
+        }
+
+        const auto copyRange = CopyData::instance().range<QItemSelectionRange>();
+        const auto *model = m_table->model();
+        QVector<Range> pasteSelection(selectionItem.size());
+        QVector<int> insertRows, insertColumns;
+        // 计算待处理的数据
+        for (qsizetype i{0}; i < selectionItem.size(); ++i) {
+            const auto &topLeft = selectionItem.at(i).topLeft();
+            const Range range {
+                topLeft.column(), topLeft.column() + static_cast<int>(columnCount) - 1,
+                topLeft.row(), topLeft.row() + static_cast<int>(rowCount) - 1
+            };
+            pasteSelection[i] = range;
+            AddList addList;
+            addList(insertColumns, model->columnCount(), range.right - model->columnCount() + 1);
+            addList(insertRows, model->rowCount(), range.bottom - model->rowCount() + 1);
+        }
+        // 获取旧数据
+        auto [preSelection, preData] = TableDataAndRange(Qt::DisplayRole)(pasteSelection, m_table);
+        auto cur = QVariant::fromValue(Data{pasteSelection, copyData});
+        auto old = QVariant::fromValue(Data{preSelection, preData});
+        TableView::undoStack().push(new CopyCmd(m_table, std::move(old), std::move(cur),
+                                                OptData{std::move(insertRows), std::move(insertColumns)},
+                                                Qt::EditRole));
+    }
+}
+
+void PasteCmd::tableCmd(const QItemSelection &selectionItem) const
+{
     const auto copyData = CopyData::instance().data<QVariantList>();
     const auto copyRange = CopyData::instance().range<QItemSelectionRange>();
     const auto *model = m_table->model();
-    if (copyData.isEmpty()) {
+    if (copyData.isEmpty() && QApplication::clipboard()->text().isEmpty()) {
         return;
     }
 
     QVector<Range> pasteSelection(selectionItem.size());
     QVector<int> insertRows, insertColumns;
     // 计算获得待处理的区域
-    for (qsizetype i {0}; i < selectionItem.size(); ++i) {
+    for (qsizetype i{0}; i < selectionItem.size(); ++i) {
         AddList addList;
         const auto &topLeft = selectionItem.at(i).topLeft();
-        const Range range{topLeft.column(), topLeft.column() + copyRange.width() - 1,
-                    topLeft.row(), topLeft.row() + copyRange.height() - 1};
+        const Range range{
+            topLeft.column(), topLeft.column() + copyRange.width() - 1,
+            topLeft.row(), topLeft.row() + copyRange.height() - 1
+        };
 
         pasteSelection[i] = range;
         // 判断是否需要插入行列
@@ -180,13 +261,18 @@ void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
     // 对需要插入的行列进行排序
     insertRows = Smaller<int>()(insertRows);
     insertColumns = Smaller<int>()(insertColumns);
-
     // 获取旧数据
-    auto [preSelection, preData] = TableDataAndRange()(pasteSelection, m_table, Qt::UserRole);
+    auto [preSelection, preData] = TableDataAndRange(Qt::UserRole)(pasteSelection, m_table);
 
     auto cur = QVariant::fromValue(Data{pasteSelection, copyData});
     auto old = QVariant::fromValue(Data{preSelection, preData});
 
-    TableView::undoStack().push(new CopyCmd(m_table, std::move(old), std::move(cur),
-                                            OptData{std::move(insertRows), std::move(insertColumns)}, Qt::UserRole));
+    const auto opt = CopyData::instance().opt();
+    if (Table::TypeFlag::Copy == opt) {
+        TableView::undoStack().push(new CopyCmd(m_table, std::move(old), std::move(cur),
+                                                OptData{std::move(insertRows), std::move(insertColumns)}));
+    } else if (Table::TypeFlag::Cut == opt) {
+        TableView::undoStack().push(new CutCmd(m_table, std::move(old), std::move(cur),
+                                               OptData{std::move(insertRows), std::move(insertColumns)}));
+    }
 }

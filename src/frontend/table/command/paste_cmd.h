@@ -18,6 +18,9 @@ class PasteCmd final : public TableCmd {
 public:
     explicit PasteCmd(TableView *table);
     void cmd(QObject *contextObject, const QItemSelection &selectionItem) override;
+
+private:
+    void tableCmd(const QItemSelection &selectionItem) const;
 };
 
 

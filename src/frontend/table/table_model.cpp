@@ -111,6 +111,7 @@ bool TableModel::setData(const QModelIndex &index, const QVariant &value, int ro
     const int dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1);
     if (dataType != -1) {
         m_data->ref(index.row(), index.column()).setData(static_cast<TableData::Type>(dataType), value);
+        emit dataChanged(index, index);
         return true;
     }
     return QAbstractItemModel::setData(index, value, role);
