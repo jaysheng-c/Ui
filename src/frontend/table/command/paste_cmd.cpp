@@ -27,9 +27,11 @@ struct Range {
     int right;
     int top;
     int bottom;
+
     friend QDebug operator<<(QDebug debug, const Range &range)
     {
-        debug << "left:" << range.left << ",right:" << range.right << ",top:" << range.top << ",bottom:" << range.bottom;
+        debug << "left:" << range.left << ",right:" << range.right << ",top:" << range.top << ",bottom:" << range.
+                bottom;
         return debug;
     }
 };
@@ -37,6 +39,11 @@ struct Range {
 struct Data {
     QVector<Range> ranges;
     QVariantList values;
+};
+
+struct CutData {
+    Data data;
+    QPointer<TableView> sourceTable;
 };
 
 struct OptData {
@@ -48,7 +55,8 @@ using DataPair = QPair<QVector<Range>, QVariantList>;
 
 class CopyCmd : public QUndoCommand {
 public:
-    CopyCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData, const int role = Qt::UserRole)
+    CopyCmd(const QPointer<TableView> &table, QVariant &&old, QVariant &&cur, OptData &&optData,
+            const int role = Qt::UserRole)
         : QUndoCommand("copy_paste"), m_table(table), m_old(std::move(old)), m_cur(std::move(cur)),
           m_optData(optData), m_role(role)
     {
@@ -83,7 +91,7 @@ public:
         }
     }
 
-protected:
+private:
     void insert()
     {
         if (!m_optData.insertColumns.isEmpty()) {
@@ -107,21 +115,61 @@ protected:
                                          static_cast<int>(m_optData.insertRows.size()));
         }
     }
+protected:
+    int m_role;
 
-    TableView *m_table;
+private:
+    QPointer<TableView> m_table;
     QVariant m_old;
     QVariant m_cur;
 
     OptData m_optData;
-    int m_role;
 };
 
 class CutCmd final : public CopyCmd {
 public:
-    CutCmd(TableView *table, QVariant &&old, QVariant &&cur, OptData &&optData)
+    CutCmd(const CutData &source, const QPointer<TableView> &table, QVariant &&old, QVariant &&cur,
+           OptData &&optData)
         : CopyCmd(table, std::move(old), std::move(cur), std::move(optData))
     {
+        m_sourceTable = source.sourceTable;
+        m_sourceData = source.data;
     }
+
+    void redo() override
+    {
+        if (!m_sourceTable.isNull()) {
+            for (const auto [left, right, top, bottom]: m_sourceData.ranges) {
+                for (int row{top}; row <= bottom; ++row) {
+                    for (int column{left}; column <= right; ++column) {
+                        m_sourceTable->model()->setData(m_sourceTable->model()->index(row, column), "",
+                                                        Qt::DisplayRole);
+                    }
+                }
+            }
+        }
+        CopyCmd::redo();
+    }
+
+    void undo() override
+    {
+        CopyCmd::undo();
+        if (!m_sourceTable.isNull()) {
+            for (const auto [left, right, top, bottom]: m_sourceData.ranges) {
+                qsizetype i = 0;
+                for (int row{top}; row <= bottom; ++row) {
+                    for (int column{left}; column <= right; ++column) {
+                        m_sourceTable->model()->setData(m_sourceTable->model()->index(row, column),
+                                                        m_sourceData.values.at(i++), m_role);
+                    }
+                }
+            }
+        }
+    }
+
+private:
+    QPointer<TableView> m_sourceTable;
+    Data m_sourceData;
 };
 
 class AddList {
@@ -214,7 +262,7 @@ void PasteCmd::cmd(QObject *contextObject, const QItemSelection &selectionItem)
         // 计算待处理的数据
         for (qsizetype i{0}; i < selectionItem.size(); ++i) {
             const auto &topLeft = selectionItem.at(i).topLeft();
-            const Range range {
+            const Range range{
                 topLeft.column(), topLeft.column() + static_cast<int>(columnCount) - 1,
                 topLeft.row(), topLeft.row() + static_cast<int>(rowCount) - 1
             };
@@ -272,7 +320,10 @@ void PasteCmd::tableCmd(const QItemSelection &selectionItem) const
         TableView::undoStack().push(new CopyCmd(m_table, std::move(old), std::move(cur),
                                                 OptData{std::move(insertRows), std::move(insertColumns)}));
     } else if (Table::TypeFlag::Cut == opt) {
-        TableView::undoStack().push(new CutCmd(m_table, std::move(old), std::move(cur),
+        CutData sourceData;
+        sourceData.sourceTable = CopyData::instance().sourceTable();
+        sourceData.data = {{{copyRange.left(), copyRange.right(), copyRange.top(), copyRange.bottom()}}, copyData};
+        TableView::undoStack().push(new CutCmd(sourceData, m_table, std::move(old), std::move(cur),
                                                OptData{std::move(insertRows), std::move(insertColumns)}));
     }
 }
