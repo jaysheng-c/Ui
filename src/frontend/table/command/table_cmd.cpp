@@ -10,7 +10,12 @@
   */
 
 #include "table_cmd.h"
+#include "table/table_view.h"
 #include <QDebug>
+
+TableCmd::TableCmd(TableView *table) : m_table(table)
+{
+}
 
 Reflector::~Reflector()
 {

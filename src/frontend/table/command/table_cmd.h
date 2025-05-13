@@ -14,6 +14,7 @@
 
 #include <QMap>
 #include <QVector>
+#include <QPointer>
 
 class TableView;
 class QObject;
@@ -21,13 +22,13 @@ class QItemSelection;
 
 class TableCmd {
 public:
-    explicit TableCmd(TableView *table) : m_table(table) {}
+    explicit TableCmd(TableView *table);
     virtual ~TableCmd() = default;
 
     virtual void cmd(QObject *contextObject, const QItemSelection &selectionItem) = 0;
 
 protected:
-    TableView *m_table;
+    QPointer<TableView> m_table;
 };
 
 template<class T>
