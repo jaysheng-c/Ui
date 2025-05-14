@@ -14,6 +14,7 @@
 
 #include <QPointer>
 #include <QTableView>
+#include "global/macro.h"
 
 namespace Table {
 enum class TypeFlag;
@@ -33,6 +34,7 @@ public:
     void setCmd(Table::TypeFlag type, const std::shared_ptr<TableCmd> &cmd);
     void setTableMenu(TableMenu *menu) noexcept;
     void setTableModel(TableModel *model);
+    NODISCARD QPointer<TableModel> tableModel() const { return m_model; }
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;

@@ -177,3 +177,20 @@ QVariant TableModel::data(const QItemSelection &selection, int role) const
     }
     return d;
 }
+
+bool TableModel::setDataWithoutCommit(const QModelIndex &index, const QVariant &value, int role) const
+{
+    if (!index.isValid()) {
+        return false;
+    }
+    if (role == Qt::UserRole) {
+        m_data->ref(index.row(), index.column()) = value.value<TableData>();
+        return true;
+    }
+    const int dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1);
+    if (dataType != -1) {
+        m_data->ref(index.row(), index.column()).setData(static_cast<TableData::Type>(dataType), value);
+        return true;
+    }
+    return false;
+}

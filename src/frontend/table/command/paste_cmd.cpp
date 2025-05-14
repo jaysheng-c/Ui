@@ -18,6 +18,7 @@
 #include "table/table_global.h"
 #include "table/data/copy_data.h"
 #include "table/table_view.h"
+#include "table/table_model.h"
 
 REFLECT(PasteCmd)
 
@@ -71,10 +72,11 @@ public:
             qsizetype i = 0;
             for (int row{top}; row <= bottom; ++row) {
                 for (int column{left}; column <= right; ++column) {
-                    m_table->model()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
+                    m_table->tableModel()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
                 }
             }
         }
+        m_table->tableModel()->submit();
     }
 
     void undo() override
@@ -85,10 +87,11 @@ public:
             qsizetype i = 0;
             for (int row{top}; row <= bottom; ++row) {
                 for (int column{left}; column <= right; ++column) {
-                    m_table->model()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
+                    m_table->tableModel()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
                 }
             }
         }
+        m_table->tableModel()->submit();
     }
 
 private:

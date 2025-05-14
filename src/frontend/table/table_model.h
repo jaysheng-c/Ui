@@ -42,6 +42,7 @@ public: // override
 public:
     // read
     NODISCARD QVariant data(const QItemSelection &selection, int role = Qt::DisplayRole) const;
+    bool setDataWithoutCommit(const QModelIndex &index, const QVariant &value, int role) const;
 
 private:
     std::unique_ptr<Matrix<TableData>> m_data;

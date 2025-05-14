@@ -34,8 +34,9 @@ public:
     {
         const auto [selection, values] = m_cur.value<Data>();
         for (const auto &item : selection.indexes()) {
-            m_table->model()->setData(item, "", Qt::DisplayRole);
+            m_table->tableModel()->setData(item, "", Qt::DisplayRole);
         }
+        m_table->tableModel()->submit();
     }
 
     void undo() override
@@ -44,12 +45,13 @@ public:
         const auto indexes = selection.indexes();
         const auto dataList = values.value<QVariantList>();
         for (qsizetype i {0}; i < selection.indexes().size(); ++i) {
-            m_table->model()->setData(indexes.at(i), dataList.at(i), Qt::DisplayRole);
+            m_table->tableModel()->setData(indexes.at(i), dataList.at(i), Qt::DisplayRole);
         }
+        m_table->tableModel()->submit();
     }
 
 private:
-    TableView *m_table;
+    QPointer<TableView> m_table;
     QVariant m_old;
     QVariant m_cur;
 };
@@ -67,12 +69,8 @@ void ClearCmd::cmd(QObject *contextObject, const QItemSelection &selection)
         qInfo() << "ClearCmd::cmd" << "selection is empty";
         return;
     }
-    auto *model = qobject_cast<TableModel*>(m_table->model());
-    if (!model) {
-        qWarning() << "ClearCmd::cmd" << "model is nullptr";
-        return;
-    }
-    auto old = QVariant::fromValue(Data{selection, model->data(selection, Qt::DisplayRole)});
+
+    auto old = QVariant::fromValue(Data{selection, m_table->tableModel()->data(selection, Qt::DisplayRole)});
     auto cur = QVariant::fromValue(Data{selection, {}});
     TableView::undoStack().push(new Cmd(m_table, std::move(old), std::move(cur)));
 }
