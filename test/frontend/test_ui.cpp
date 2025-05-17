@@ -12,10 +12,12 @@
 #include <QFile>
 #include <QElapsedTimer>
 #include "frontend/main_window.h"
-#include "frontend/table/data/matrix.h"
 #include "frontend/table/data/table_data.h"
+#include "frontend/table/data/matrix.h"
+#include "frontend/table/table_view.h"
+#include "frontend/table/table_model.h"
 
-QString alpha(int section)
+QString alpha(const int section)
 {
     QString colName;
     static QVector<QChar> alpha = {
@@ -43,6 +45,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    qRegisterMetaType<TableData>("TableData"); // 显式注册类型
+
 //    QVector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8};
 //    std::swap_ranges(vec.begin() + 4, vec.begin() + 6, vec.begin());
 //    qDebug() << vec;
@@ -55,6 +59,25 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.resize(800, 600);
+
+    auto *table = new TableView(&w);
+    const auto model = table->tableModel();
+
+    QStringList colNames(20);
+    for (int i{0}; i < colNames.size(); ++i) {
+        colNames[i] = alpha(i);
+    }
+    QElapsedTimer timer;
+    timer.start();
+    Matrix<TableData> data(/*10000 **/ 100, 20, ExpandType::Row);
+    for (int row {0}; row < data.rows(); ++row) {
+        for (int column {0}; column < data.columns(); ++column) {
+            data.setData(row, column, TableData(colNames.at(column) + QString::number(row)));
+        }
+    }
+    model->resetData(std::move(data));
+
+    w.setCentralWidget(table);
     w.show();
     return QApplication::exec();
 }

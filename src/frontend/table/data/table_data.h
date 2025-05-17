@@ -18,7 +18,8 @@
 #include "frontend/global/global.h"
 
 
-class UI_EXPORT TableData {
+class UI_EXPORT TableData final {
+    Q_GADGET
 public:
     enum Type {
         Real,
@@ -47,7 +48,7 @@ public:
     explicit TableData(const QString &value = "");
     TableData(const TableData &data);
     TableData(TableData &&data) noexcept;
-    virtual ~TableData() = default;
+    ~TableData() = default;
 
     QVariant data(Type type) const;
     bool setData(Type type, const QVariant &data);
@@ -66,12 +67,12 @@ public:
     TableData &operator=(TableData &&data) noexcept;
     bool operator<(const TableData& other) const;
 
-    friend QDebug operator<<(QDebug debug, const TableData &obj);
-    friend QDebug operator<<(QDebug debug, const TableData *obj);
-    friend QDataStream &operator<<(QDataStream &out, const TableData &obj);
-    friend QDataStream &operator>>(QDataStream &in, TableData &obj);
-    friend size_t qHash(const TableData& obj);
-    friend size_t qHash(const TableData *obj);
+    friend UI_EXPORT QDebug operator<<(QDebug debug, const TableData &obj);
+    friend UI_EXPORT QDebug operator<<(QDebug debug, const TableData *obj);
+    friend UI_EXPORT QDataStream &operator<<(QDataStream &out, const TableData &obj);
+    friend UI_EXPORT QDataStream &operator>>(QDataStream &in, TableData &obj);
+    friend UI_EXPORT size_t qHash(const TableData& obj);
+    friend UI_EXPORT size_t qHash(const TableData *obj);
 
 private:
     // value
