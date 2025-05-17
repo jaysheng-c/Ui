@@ -8,6 +8,7 @@ set(TableHeader
         ${CMAKE_CURRENT_LIST_DIR}/command/remove_row_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/remove_column_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/move_right_cmd.h
+        ${CMAKE_CURRENT_LIST_DIR}/command/move_down_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/clear_cmd.h
         ${CMAKE_CURRENT_LIST_DIR}/command/paste_cmd.h
 
@@ -29,6 +30,7 @@ set(TableSource
         ${CMAKE_CURRENT_LIST_DIR}/command/remove_row_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/remove_column_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/move_right_cmd.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/command/move_down_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/clear_cmd.cpp
         ${CMAKE_CURRENT_LIST_DIR}/command/paste_cmd.cpp
 
