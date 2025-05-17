@@ -14,7 +14,7 @@
 
 #include <QPointer>
 #include <QTableView>
-#include "global/macro.h"
+#include "frontend/global/global.h"
 
 namespace Table {
 enum class TypeFlag;
@@ -25,7 +25,7 @@ class TableMenu;
 class TableModel;
 class TableCmd;
 
-class TableView : public QTableView {
+class UI_EXPORT TableView : public QTableView {
 Q_OBJECT
 public:
     static QUndoStack &undoStack() { return s_stack; }

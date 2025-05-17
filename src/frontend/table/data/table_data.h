@@ -15,9 +15,10 @@
 #include <QString>
 #include <QRgb>
 #include <QMetaType>
+#include "frontend/global/global.h"
 
 
-class TableData {
+class UI_EXPORT TableData {
 public:
     enum Type {
         Real,

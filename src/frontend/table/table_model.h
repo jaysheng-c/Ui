@@ -13,13 +13,13 @@
 #define TABLE_MODEL_H
 
 #include <QAbstractTableModel>
-#include "global/macro.h"
+#include "frontend/global/macro.h"
 #include "data/table_data.h"
 #include "data/matrix.h"
 
 class QItemSelection;
 
-class TableModel : public QAbstractTableModel {
+class UI_EXPORT TableModel : public QAbstractTableModel {
 Q_OBJECT
 public:
     explicit TableModel(ExpandType type, QObject *parent = nullptr);
@@ -42,8 +42,11 @@ public: // override
 public:
     // read
     NODISCARD QVariant data(const QItemSelection &selection, int role = Qt::DisplayRole) const;
+    // set
     bool setDataWithoutCommit(const QModelIndex &index, const QVariant &value, int role) const;
-
+    void resetData(Matrix<TableData> &&data);
+    void resetData(const Matrix<TableData> &data);
+    void resetData();
 private:
     std::unique_ptr<Matrix<TableData>> m_data;
 };

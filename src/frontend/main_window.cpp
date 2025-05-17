@@ -21,7 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     this->setMenuWidget(new TitleWidget(this));
     this->addToolBar(Qt::TopToolBarArea, new ToolBar(this));
-    this->setCentralWidget(new TableView(this));
 
     qDebug() << qApp->metaObject()->className();
 }

@@ -46,13 +46,6 @@ QString alpha(const int section) {
 TableModel::TableModel(ExpandType type, QObject *parent)
     : QAbstractTableModel(parent), m_data(std::make_unique<Matrix<TableData>>(MIN_ROWS, MIN_COLUMNS, type))
 {
-    for (int column { 0 }; column < m_data->columns(); ++column) {
-        const QString &a = alpha(column);
-        for (int row { 0 }; row < m_data->rows(); ++row) {
-            m_data->setData(row, column, TableData(a + QString::number(row + 1)));
-        }
-    }
-
 }
 
 int TableModel::rowCount(const QModelIndex &parent) const
@@ -193,4 +186,25 @@ bool TableModel::setDataWithoutCommit(const QModelIndex &index, const QVariant &
         return true;
     }
     return false;
+}
+
+void TableModel::resetData(Matrix<TableData> &&data)
+{
+    beginResetModel();
+    m_data = std::make_unique<Matrix<TableData>>(data);
+    endResetModel();
+}
+
+void TableModel::resetData(const Matrix<TableData> &data)
+{
+    beginResetModel();
+    m_data = std::make_unique<Matrix<TableData>>(data);
+    endResetModel();
+}
+
+void TableModel::resetData()
+{
+    beginResetModel();
+    m_data = std::make_unique<Matrix<TableData>>(MIN_ROWS, MIN_COLUMNS, m_data->type());
+    endResetModel();
 }

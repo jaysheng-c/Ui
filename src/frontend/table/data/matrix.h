@@ -39,7 +39,7 @@ public:
     NODISCARD ExpandType type() const { return m_type; }
     NODISCARD int columns() const { return m_columns; }
     NODISCARD int rows() const { return m_rows; }
-    NODISCARD qsizetype count() { return m_columns * m_rows; }
+    NODISCARD qsizetype count() const { return m_columns * m_rows; }
     NODISCARD const QVector<T> &data() const { return m_data; }
     NODISCARD const_reference at(int row, int column) const noexcept;
     NODISCARD reference ref(int row, int column);
@@ -50,10 +50,10 @@ public:
     bool setData(int row, int column, T &&data);
     bool setData(int row, int column, const T &data);
 
-    MAYBE_UNUSED inline bool insertColumn(int column) { return insertColumns(column, 1); }
-    MAYBE_UNUSED inline bool insertRow(int row) { return insertRows(row, 1); }
-    MAYBE_UNUSED inline bool removeColumn(int column) { return removeColumns(column, 1); }
-    MAYBE_UNUSED inline bool removeRow(int row) { return removeRows(row, 1); }
+    MAYBE_UNUSED inline bool insertColumn(const int column) { return insertColumns(column, 1); }
+    MAYBE_UNUSED inline bool insertRow(const int row) { return insertRows(row, 1); }
+    MAYBE_UNUSED inline bool removeColumn(const int column) { return removeColumns(column, 1); }
+    MAYBE_UNUSED inline bool removeRow(const int row) { return removeRows(row, 1); }
 
     MAYBE_UNUSED bool insertColumns(int column, int count, const T &data = T())
     {
@@ -153,7 +153,7 @@ public:
         }
         return true;
     }
-    MAYBE_UNUSED bool removeColumns(int column, int count)
+    MAYBE_UNUSED bool removeColumns(const int column, int count)
     {
         if (column < 0 || column >= m_columns || count <= 0) {
             qWarning() << "column out of range or count small than 0";
@@ -208,7 +208,7 @@ public:
         adjustRowColumn();
         return true;
     }
-    MAYBE_UNUSED bool removeRows(int row, int count)
+    MAYBE_UNUSED bool removeRows(const int row, int count)
     {
         if (row < 0 || row >= m_rows || count <= 0) {
             qWarning() << "row out of range or count small than 0";
@@ -264,7 +264,7 @@ public:
 
 
 protected:
-    NODISCARD qsizetype realIndex(int row, int column) const
+    NODISCARD qsizetype realIndex(const int row, const int column) const
     {
         switch (m_type) {
             case ExpandType::Column:    return row * m_columns + column;
@@ -272,6 +272,7 @@ protected:
         }
         return -1;
     }
+
     void adjustRowColumn()
     {
         if (m_columns <= 0) {
@@ -291,11 +292,11 @@ protected:
 
 template<class T>
 Matrix<T>::Matrix()
-    : m_columns(MIN_COLUMNS), m_rows(MIN_ROWS), m_data(MIN_COLUMNS * MIN_ROWS), m_type(ExpandType::Row) {}
+    : m_type(ExpandType::Row), m_columns(MIN_COLUMNS), m_rows(MIN_ROWS), m_data(MIN_COLUMNS * MIN_ROWS) {}
 
 template<class T>
-Matrix<T>::Matrix(int rows, int columns, ExpandType type)
-    : m_rows(rows), m_columns(columns), m_type(type), m_data(columns * rows, T()) {}
+Matrix<T>::Matrix(const int rows, const int columns, const ExpandType type)
+    : m_type(type), m_columns(columns), m_rows(rows), m_data(columns * rows, T()) {}
 
 template<class T>
 Matrix<T>::Matrix(const Matrix &other)
@@ -342,7 +343,7 @@ Matrix<T> &Matrix<T>::operator=(Matrix &&other) noexcept
 }
 
 template<class T>
-typename Matrix<T>::const_reference Matrix<T>::at(int row, int column) const noexcept
+typename Matrix<T>::const_reference Matrix<T>::at(const int row, const int column) const noexcept
 {
     auto i = realIndex(row, column);
     Q_ASSERT_X(i >= 0 && i < m_data.size(), "QVector::at", "index out of range");
@@ -350,7 +351,7 @@ typename Matrix<T>::const_reference Matrix<T>::at(int row, int column) const noe
 }
 
 template<class T>
-typename Matrix<T>::reference Matrix<T>::ref(int row, int column)
+typename Matrix<T>::reference Matrix<T>::ref(const int row, const int column)
 {
     auto i = realIndex(row, column);
     Q_ASSERT_X(i >= 0 && i < m_data.size(), "QVector::at", "index out of range");
@@ -358,7 +359,7 @@ typename Matrix<T>::reference Matrix<T>::ref(int row, int column)
 }
 
 template<class T>
-bool Matrix<T>::setColumns(int count)
+bool Matrix<T>::setColumns(const int count)
 {
     if (count <= m_columns) {
         qWarning() << "count must be greater than current count";
@@ -370,7 +371,7 @@ bool Matrix<T>::setColumns(int count)
 }
 
 template<class T>
-bool Matrix<T>::setRows(int rows)
+bool Matrix<T>::setRows(const int rows)
 {
     if (rows <= m_rows) {
         qWarning() << "rows must be greater than current rows";
@@ -382,7 +383,7 @@ bool Matrix<T>::setRows(int rows)
 }
 
 template<class T>
-bool Matrix<T>::setData(int row, int column, T &&data)
+bool Matrix<T>::setData(const int row, const int column, T &&data)
 {
     qsizetype i = realIndex(row, column);
     if (i < 0) {
@@ -394,7 +395,7 @@ bool Matrix<T>::setData(int row, int column, T &&data)
 }
 
 template<class T>
-bool Matrix<T>::setData(int row, int column, const T &data)
+bool Matrix<T>::setData(const int row, const int column, const T &data)
 {
     qsizetype i = realIndex(row, column);
     if (i < 0) {
