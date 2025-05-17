@@ -15,12 +15,13 @@
 #include <QMap>
 #include <QVector>
 #include <QPointer>
+#include "frontend/global/global.h"
 
 class TableView;
 class QObject;
 class QItemSelection;
 
-class TableCmd {
+class UI_EXPORT TableCmd {
 public:
     struct Range {
         int left;

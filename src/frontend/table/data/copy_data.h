@@ -14,13 +14,12 @@
 
 #include <QVariant>
 #include <QPointer>
-
-#include "global/macro.h"
+#include "frontend/global/global.h"
 
 namespace Table { enum class TypeFlag; }
 class TableView;
 
-class CopyData final {
+class UI_EXPORT CopyData final {
 public:
     enum Type { None, Cell, Column, Row };
     ~CopyData();
