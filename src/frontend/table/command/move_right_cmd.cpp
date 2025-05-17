@@ -45,7 +45,7 @@ public:
                 }
             }
         }
-        model->submit();
+        emit model->dataChanged(model->index(top, left), model->index(m_range.bottom, m_range.right));
     }
 
     void redo() override
@@ -67,7 +67,7 @@ public:
                 }
             }
         }
-        model->submit();
+        emit model->dataChanged(model->index(top, left), model->index(m_range.bottom, m_range.right));
     }
 
 private:

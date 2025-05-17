@@ -54,31 +54,33 @@ public:
     {
         // 判断是否需要插入行或列
         insert();
+        const auto model = m_table->tableModel();
         auto [ranges, values] = m_cur.value<Data>();
         for (const auto [left, right, top, bottom]: ranges) {
             qsizetype i = 0;
             for (int row{top}; row <= bottom; ++row) {
                 for (int column{left}; column <= right; ++column) {
-                    m_table->tableModel()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
+                    (void)model->setDataWithoutCommit(m_table->model()->index(row, column), values.at(i++), m_role);
                 }
             }
+            model->dataChanged(model->index(top, left), model->index(bottom, right));
         }
-        m_table->tableModel()->submit();
     }
 
     void undo() override
     {
         remove();
+        const auto model = m_table->tableModel();
         auto [ranges, values] = m_old.value<Data>();
         for (const auto [left, right, top, bottom]: ranges) {
             qsizetype i = 0;
             for (int row{top}; row <= bottom; ++row) {
                 for (int column{left}; column <= right; ++column) {
-                    m_table->tableModel()->setData(m_table->model()->index(row, column), values.at(i++), m_role);
+                    (void)model->setDataWithoutCommit(m_table->model()->index(row, column), values.at(i++), m_role);
                 }
             }
+            model->dataChanged(model->index(top, left), model->index(bottom, right));
         }
-        m_table->tableModel()->submit();
     }
 
 private:

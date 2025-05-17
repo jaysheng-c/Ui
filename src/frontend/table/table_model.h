@@ -43,7 +43,7 @@ public:
     // read
     NODISCARD QVariant data(const QItemSelection &selection, int role = Qt::DisplayRole) const;
     // set
-    bool setDataWithoutCommit(const QModelIndex &index, const QVariant &value, int role) const;
+    NODISCARD bool setDataWithoutCommit(const QModelIndex &index, const QVariant &value, int role) const;
     void resetData(Matrix<TableData> &&data);
     void resetData(const Matrix<TableData> &data);
     void resetData();

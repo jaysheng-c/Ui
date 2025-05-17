@@ -32,22 +32,38 @@ public:
 
     void redo() override
     {
+        const auto model = m_table->tableModel();
         const auto [selection, values] = m_cur.value<Data>();
-        for (const auto &item : selection.indexes()) {
-            m_table->tableModel()->setData(item, "", Qt::DisplayRole);
+        int left{std::numeric_limits<int>::max()}, top{std::numeric_limits<int>::max()}, right{0}, bottom{0};
+        for (const auto &d : selection) {
+            left = qMin(d.left(), left);
+            top = qMin(d.top(), top);
+            right = qMax(d.right(), right);
+            bottom = qMax(d.bottom(), bottom);
         }
-        m_table->tableModel()->submit();
+        for (const auto &item : selection.indexes()) {
+            (void) model->setDataWithoutCommit(item, "", Qt::DisplayRole);
+        }
+        model->dataChanged(model->index(top, left), model->index(bottom, right));
     }
 
     void undo() override
     {
+        const auto model = m_table->tableModel();
         const auto [selection, values] = m_old.value<Data>();
         const auto indexes = selection.indexes();
         const auto dataList = values.value<QVariantList>();
-        for (qsizetype i {0}; i < selection.indexes().size(); ++i) {
-            m_table->tableModel()->setData(indexes.at(i), dataList.at(i), Qt::DisplayRole);
+        int left{std::numeric_limits<int>::max()}, top{std::numeric_limits<int>::max()}, right{0}, bottom{0};
+        for (const auto &d : selection) {
+            left = qMin(d.left(), left);
+            top = qMin(d.top(), top);
+            right = qMax(d.right(), right);
+            bottom = qMax(d.bottom(), bottom);
         }
-        m_table->tableModel()->submit();
+        for (qsizetype i {0}; i < selection.indexes().size(); ++i) {
+            (void) model->setDataWithoutCommit(indexes.at(i), dataList.at(i), Qt::DisplayRole);
+        }
+        model->dataChanged(model->index(top, left), model->index(bottom, right));
     }
 
 private:
