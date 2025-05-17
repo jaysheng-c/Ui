@@ -22,6 +22,13 @@ class QItemSelection;
 
 class TableCmd {
 public:
+    struct Range {
+        int left;
+        int right;
+        int top;
+        int bottom;
+        friend QDebug operator<<(QDebug debug, const Range &range);
+    };
     explicit TableCmd(TableView *table);
     virtual ~TableCmd() = default;
 

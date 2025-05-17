@@ -35,8 +35,8 @@ QUndoStack TableView::s_stack;
 TableView::TableView(QWidget *parent)
     : QTableView(parent), m_menu(nullptr), m_model(nullptr)
 {
-    this->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    this->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    // this->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    // this->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     this->setContextMenuPolicy(Qt::CustomContextMenu);
     this->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
     this->verticalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);

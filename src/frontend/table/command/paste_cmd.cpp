@@ -23,22 +23,9 @@
 REFLECT(PasteCmd)
 
 namespace {
-struct Range {
-    int left;
-    int right;
-    int top;
-    int bottom;
-
-    friend QDebug operator<<(QDebug debug, const Range &range)
-    {
-        debug << "left:" << range.left << ",right:" << range.right << ",top:" << range.top << ",bottom:" << range.
-                bottom;
-        return debug;
-    }
-};
 
 struct Data {
-    QVector<Range> ranges;
+    QVector<TableCmd::Range> ranges;
     QVariantList values;
 };
 
@@ -52,7 +39,7 @@ struct OptData {
     QVector<int> insertColumns;
 };
 
-using DataPair = QPair<QVector<Range>, QVariantList>;
+using DataPair = QPair<QVector<TableCmd::Range>, QVariantList>;
 
 class CopyCmd : public QUndoCommand {
 public:
@@ -199,11 +186,11 @@ public:
     {
     }
 
-    DataPair operator()(const QVector<Range> &origin, const TableView *table) const
+    DataPair operator()(const QVector<TableCmd::Range> &origin, const TableView *table) const
     {
         QVariantList data;
         QItemSelection itemSelection(origin.size());
-        QVector<Range> itemRanges(origin.size());
+        QVector<TableCmd::Range> itemRanges(origin.size());
 
         const auto *model = table->model();
         // 计算需要获取的数据大小

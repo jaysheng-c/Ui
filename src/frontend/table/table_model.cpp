@@ -26,7 +26,7 @@ QHash<Qt::ItemDataRole, int> QRoleToDataType {
         {Qt::FontRole, TableData::Font},
 };
 
-QString alpha(int section) {
+QString alpha(const int section) {
     QString colName;
     static QVector<QChar> alpha = {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',

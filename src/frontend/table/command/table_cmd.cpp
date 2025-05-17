@@ -13,6 +13,13 @@
 #include "table/table_view.h"
 #include <QDebug>
 
+QDebug operator<<(QDebug debug, const TableCmd::Range &range)
+{
+    debug << "left:" << range.left << ",right:" << range.right << ",top:" << range.top << ",bottom:" << range.
+            bottom;
+    return debug;
+}
+
 TableCmd::TableCmd(TableView *table) : m_table(table)
 {
 }
