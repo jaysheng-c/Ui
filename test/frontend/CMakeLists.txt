@@ -1,6 +1,10 @@
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/test/frontend)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/test/frontend)
 
+
+set(QRC_SOURCE_FILES resource/test.qrc)
+qt_add_resources(${QRC_SOURCE_FILES})
+
 add_executable(TestTable test_table.cpp)
 target_link_directories(TestTable PRIVATE ${CMAKE_BINARY_DIR}/src)
 target_link_libraries(TestTable PRIVATE
@@ -16,7 +20,7 @@ add_custom_command(TARGET TestTable POST_BUILD
         $<TARGET_FILE_DIR:TestTable>
 )
 
-add_executable(TestTree test_tree.cpp)
+add_executable(TestTree test_tree.cpp ${QRC_SOURCE_FILES})
 target_link_directories(TestTree PRIVATE ${CMAKE_BINARY_DIR}/src)
 target_link_libraries(TestTree PRIVATE
         Qt::Core

@@ -1,0 +1,30 @@
+[
+  {
+    "data": [
+      {
+        "type": 0,
+        "value": "1"
+      }
+    ],
+    "children": [
+      {
+        "data": [
+          {
+            "type": 0,
+            "value": "1_2"
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  {
+    "data": [
+      {
+        "type": 0,
+        "value": "2"
+      }
+    ],
+    "children": []
+  }
+]
