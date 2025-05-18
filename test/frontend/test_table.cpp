@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QElapsedTimer>
+#include <QtZlib/zlib.h>
 #include "frontend/main_window.h"
 #include "frontend/table/data/table_data.h"
 #include "frontend/table/data/matrix.h"
@@ -41,11 +42,86 @@ int testMatrixInsertCol_ColumnType();
 
 int testMatrixInsertRow_RowType();
 
+QByteArray compressData(const QByteArray &data) {
+    QByteArray compressed;
+    constexpr int BUFSIZE = 128 * 1024;
+    char buf[BUFSIZE];
+
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+
+    strm.avail_in = data.size();
+    strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(data.data()));
+
+    do {
+        strm.avail_out = BUFSIZE;
+        strm.next_out = reinterpret_cast<Bytef*>(buf);
+        deflate(&strm, Z_FINISH);
+        compressed.append(buf, BUFSIZE - strm.avail_out);
+    } while (strm.avail_out == 0);
+
+    deflateEnd(&strm);
+    return compressed;
+}
+
+
+QByteArray decompressData(const QByteArray &compressed) {
+    QByteArray decompressed;
+    constexpr int BUFSIZE = 128 * 1024;
+    char buf[BUFSIZE];
+
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    inflateInit(&strm);
+
+    strm.avail_in = compressed.size();
+    strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(compressed.data()));
+
+    int ret;
+    do {
+        strm.avail_out = BUFSIZE;
+        strm.next_out = reinterpret_cast<Bytef*>(buf);
+        ret = inflate(&strm, Z_NO_FLUSH);
+        decompressed.append(buf, BUFSIZE - strm.avail_out);
+    } while (ret == Z_OK);
+
+    inflateEnd(&strm);
+    return decompressed;
+}
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     qRegisterMetaType<TableData>("TableData"); // 显式注册类型
+    // {
+    //     // 压缩
+    //     constexpr qsizetype count = 100 * 10000;
+    //     QByteArray byte;
+    //     QDataStream ds(&byte, QIODevice::WriteOnly);
+    //     QElapsedTimer toStreamTimer;
+    //     toStreamTimer.start();
+    //     for (qsizetype i{0}; i < count; ++i) {
+    //         TableData tData(QString::number(i + 1));
+    //         ds << tData;
+    //     }
+    //     qDebug() << "write " + QString::number(count) + " times, cost:" << toStreamTimer.elapsed() << "ms";
+    //     qDebug() << "origin size:" << byte.size();
+    //     toStreamTimer.restart();
+    //     const auto comByte = compressData(byte);
+    //     qDebug() << "compress cost:" << toStreamTimer.elapsed() << "ms";
+    //     qDebug() << "after compress size:" << comByte.size();
+    //
+    //     QFile file(QString::fromUtf8(__FUNCTION__) + ".txt");
+    //     qDebug() << "open file:" << file.open(QIODevice::WriteOnly);
+    //     file.write(comByte);
+    //     file.close();
+    // }
 
 //    QVector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8};
 //    std::swap_ranges(vec.begin() + 4, vec.begin() + 6, vec.begin());

@@ -14,6 +14,7 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        ZlibPrivate
         REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
