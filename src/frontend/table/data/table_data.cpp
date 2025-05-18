@@ -22,21 +22,24 @@ constexpr int BOLD = 0;
 constexpr int ITALIC = 1;
 constexpr int UNDERLINE = 2;
 
-quint16 fontFamilyIndex(const QString &text, const QFontComboBox &combo = QFontComboBox())
+
+quint16 fontFamilyIndex(const QString &text)
 {
-    const int index = combo.findText(text);
-    if (index != -1 && index < combo.count()) {
+    static QFontComboBox gFontComboBox;
+    const int index = gFontComboBox.findText(text);
+    if (index != -1 && index < gFontComboBox.count()) {
         return index;
     }
     return 0;
 }
 
-QString fontFamilyString(const int index, const QFontComboBox &combo = QFontComboBox())
+QString fontFamilyString(const int index)
 {
-    if (index < 0 || index >= combo.count()) {
-        return combo.itemText(0);
+    static QFontComboBox gFontComboBox;
+    if (index < 0 || index >= gFontComboBox.count()) {
+        return gFontComboBox.itemText(0);
     }
-    return combo.itemText(index);
+    return gFontComboBox.itemText(index);
 }
 
 QVector<bool> fontType(const int type)
