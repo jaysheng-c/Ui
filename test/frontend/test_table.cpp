@@ -57,11 +57,8 @@ int main(int argc, char *argv[])
 //    return testMatrixInsertCol_ColumnType();
 //    return testMatrixInsertRow_RowType();
 
-    MainWindow w;
-    w.resize(800, 600);
-
-    auto *table = new TableView(&w);
-    const auto model = table->tableModel();
+    TableView table;
+    const auto model = table.tableModel();
 
     QStringList colNames(20);
     for (int i{0}; i < colNames.size(); ++i) {
@@ -77,8 +74,7 @@ int main(int argc, char *argv[])
     }
     model->resetData(std::move(data));
 
-    w.setCentralWidget(table);
-    w.show();
+    table.show();
     return QApplication::exec();
 }
 
