@@ -44,11 +44,13 @@ public:
     void clearModel();
 
 private:
+    class Parser;
     class FreeNodeChild;
     struct Node;
     NODISCARD Node *nodeFromIndex(const QModelIndex &index) const;
 
     std::shared_ptr<Node> m_root;
+    std::unique_ptr<Parser> m_parser;
 };
 
 

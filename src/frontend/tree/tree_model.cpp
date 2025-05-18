@@ -10,11 +10,33 @@
   */
 
 #include "tree_model.h"
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
+/**
+ * [
+ *      {
+ *           data: [
+ *               {
+ *                   type: -1,
+ *                   value: ""
+ *               }
+ *           ],
+ *           children:[
+ *               {
+ *                   data: [],
+ *                   children: []
+ *               }
+ *           ]
+ *      }
+ * ]
+ **/
 
 struct TreeModel::Node {
-    ~Node() {qDebug() << data;}
-    
-    QVariant data;
+    ~Node() {qDebug() << dataMap;}
+
+    QMap<int, QVariant> dataMap;
     QVector<Node*> children;
     Node *parent = nullptr;
 };
@@ -42,11 +64,73 @@ private:
     }
 };
 
+class TreeModel::Parser {
+public:
+    explicit Parser(TreeModel *model) : m_model(model)
+    {
+    }
+
+    static Node *createNode(const QJsonObject &obj)
+    {
+        constexpr char dataName[] = "data";
+        constexpr char childrenName[] = "children";
+        if (!obj.contains(dataName) || !obj.value(dataName).isArray()) {
+            return nullptr;
+        }
+        auto *node = new Node;
+        const auto array = obj.value(dataName).toArray();
+        for (qsizetype i{0}; i < array.size(); ++i) {
+            const auto dataObj = array.at(i).toObject();
+            const auto type = dataObj["type"].toInt(-1);
+            if (type == -1) {
+                continue;
+            }
+            node->dataMap[type] = dataObj["value"].toVariant();
+        }
+
+        if (obj.contains(childrenName) && obj.value(childrenName).isArray()) {
+            const auto children = obj.value(childrenName).toArray();
+            for (qsizetype i{0}; i < children.size(); ++i) {
+                // 递归创建
+                if (auto *child = createNode(children.at(i).toObject())) {
+                    node->children.append(child);
+                    child->parent = node;
+                }
+            }
+        }
+        return node;
+    }
+
+    void parser(const QString &data) const
+    {
+        QJsonParseError error;
+        const auto doc = QJsonDocument::fromJson(data.toUtf8(), &error);
+        if (error.error != QJsonParseError::NoError) {
+            qWarning() << "TreeModel::resetData error [" + error.errorString() + "]";
+            return;
+        }
+        const auto array = doc.array();
+        for (qsizetype i{0}; i < array.size(); ++i) {
+            if (!array.at(i).isObject()) {
+                continue;
+            }
+            const auto &obj = array.at(i).toObject();
+            if (auto *node = createNode(obj)) {
+                node->parent = m_model->m_root.get();
+                m_model->m_root->children.append(node);
+            }
+        }
+    }
+
+private:
+    TreeModel *m_model;
+};
+
 
 TreeModel::TreeModel(QObject *parent)
-    : QAbstractItemModel(parent), m_root(std::make_unique<Node>())
+    : QAbstractItemModel(parent), m_root(std::make_unique<Node>()), m_parser(std::make_unique<Parser>(this))
 {
-    m_root->data = "root";
+    m_root->dataMap = {{Qt::DisplayRole, "root"}};
 }
 
 TreeModel::~TreeModel()
@@ -104,7 +188,7 @@ QVariant TreeModel::data(const QModelIndex &index, const int role) const
     }
     if (auto *node = static_cast<Node*>(index.internalPointer())) {
         if (role == Qt::DisplayRole) {
-            return node->data;
+            return node->dataMap[Qt::DisplayRole];
         }
     }
     return {};
@@ -128,7 +212,7 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, const i
     if (index.isValid()) {
         if (auto *node = static_cast<Node*>(index.internalPointer())) {
             if (role == Qt::DisplayRole || Qt::EditRole) {
-                node->data = value;
+                node->dataMap[role] = value;
                 emit dataChanged(index, index, {role});
                 return true;
             }
@@ -186,12 +270,7 @@ void TreeModel::resetData(const QString &data)
 {
     beginResetModel();
     FreeNodeChild()(m_root.get());
-    const auto node = new Node{"23", {}, m_root.get()};
-    node->children.append(new Node{"122", {}, node});
-    m_root->children.append(node);
-    m_root->children.append(new Node{"12", {}, m_root.get()});
-    m_root->children.append(new Node{"3", {}, m_root.get()});
-
+    m_parser->parser(data);
     endResetModel();
 }
 
