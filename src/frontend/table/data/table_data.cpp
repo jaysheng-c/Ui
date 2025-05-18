@@ -363,8 +363,6 @@ QDebug operator<<(QDebug debug, const TableData *obj)
 
 QDataStream &operator<<(QDataStream &out, const TableData &obj)
 {
-    QColor background;
-    background. setRgba(obj.m_background);
     out << obj.m_value << obj.m_display << obj.m_align << obj.m_foreground
         << obj.m_background << obj.m_family << obj.m_fontType << obj.m_fontSize;
     return out;
