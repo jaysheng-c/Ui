@@ -5,6 +5,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include(title/title.cmake)
 include(toolbar/tool.cmake)
 include(table/table.cmake)
+include(tree/tree.cmake)
 
 add_library(ui SHARED)
 target_sources(ui PRIVATE
@@ -14,6 +15,7 @@ target_sources(ui PRIVATE
         ${ToolFile}
         ${TitleFile}
         ${TableFile}
+        ${TreeFile}
 )
 target_link_libraries(ui PRIVATE
         Qt::Core
