@@ -40,6 +40,10 @@ public: // override
     bool removeColumns(int position, int columns, const QModelIndex &parent) override;
 
 public:
+    // serialize
+    QByteArray serializeData() const;
+    void deserialize(const QByteArray &data);
+
     // read
     NODISCARD QVariant data(const QItemSelection &selection, int role = Qt::DisplayRole) const;
     // set

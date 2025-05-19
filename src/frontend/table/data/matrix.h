@@ -262,6 +262,17 @@ public:
         return true;
     }
 
+    friend QDataStream &operator<<(QDataStream &out, const Matrix &matrix)
+    {
+        out << matrix.m_type << matrix.m_columns << matrix.m_rows << matrix.m_data;
+        return out;
+    }
+
+    friend QDataStream &operator>>(QDataStream &in, Matrix &matrix)
+    {
+        in >> matrix.m_type >> matrix.m_columns >> matrix.m_rows >> matrix.m_data;
+        return in;
+    }
 
 protected:
     NODISCARD qsizetype realIndex(const int row, const int column) const

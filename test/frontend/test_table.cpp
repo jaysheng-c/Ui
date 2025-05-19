@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QElapsedTimer>
+#include <QTimer>
 #include <QtZlib/zlib.h>
 #include "frontend/main_window.h"
 #include "frontend/table/data/table_data.h"
@@ -42,86 +43,11 @@ int testMatrixInsertCol_ColumnType();
 
 int testMatrixInsertRow_RowType();
 
-QByteArray compressData(const QByteArray &data) {
-    QByteArray compressed;
-    constexpr int BUFSIZE = 128 * 1024;
-    char buf[BUFSIZE];
-
-    z_stream strm;
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    deflateInit(&strm, Z_DEFAULT_COMPRESSION);
-
-    strm.avail_in = data.size();
-    strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(data.data()));
-
-    do {
-        strm.avail_out = BUFSIZE;
-        strm.next_out = reinterpret_cast<Bytef*>(buf);
-        deflate(&strm, Z_FINISH);
-        compressed.append(buf, BUFSIZE - strm.avail_out);
-    } while (strm.avail_out == 0);
-
-    deflateEnd(&strm);
-    return compressed;
-}
-
-
-QByteArray decompressData(const QByteArray &compressed) {
-    QByteArray decompressed;
-    constexpr int BUFSIZE = 128 * 1024;
-    char buf[BUFSIZE];
-
-    z_stream strm;
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    inflateInit(&strm);
-
-    strm.avail_in = compressed.size();
-    strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(compressed.data()));
-
-    int ret;
-    do {
-        strm.avail_out = BUFSIZE;
-        strm.next_out = reinterpret_cast<Bytef*>(buf);
-        ret = inflate(&strm, Z_NO_FLUSH);
-        decompressed.append(buf, BUFSIZE - strm.avail_out);
-    } while (ret == Z_OK);
-
-    inflateEnd(&strm);
-    return decompressed;
-}
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     qRegisterMetaType<TableData>("TableData"); // 显式注册类型
-    // {
-    //     // 压缩
-    //     constexpr qsizetype count = 100 * 10000;
-    //     QByteArray byte;
-    //     QDataStream ds(&byte, QIODevice::WriteOnly);
-    //     QElapsedTimer toStreamTimer;
-    //     toStreamTimer.start();
-    //     for (qsizetype i{0}; i < count; ++i) {
-    //         TableData tData(QString::number(i + 1));
-    //         ds << tData;
-    //     }
-    //     qDebug() << "write " + QString::number(count) + " times, cost:" << toStreamTimer.elapsed() << "ms";
-    //     qDebug() << "origin size:" << byte.size();
-    //     toStreamTimer.restart();
-    //     const auto comByte = compressData(byte);
-    //     qDebug() << "compress cost:" << toStreamTimer.elapsed() << "ms";
-    //     qDebug() << "after compress size:" << comByte.size();
-    //
-    //     QFile file(QString::fromUtf8(__FUNCTION__) + ".txt");
-    //     qDebug() << "open file:" << file.open(QIODevice::WriteOnly);
-    //     file.write(comByte);
-    //     file.close();
-    // }
 
 //    QVector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8};
 //    std::swap_ranges(vec.begin() + 4, vec.begin() + 6, vec.begin());
@@ -142,15 +68,39 @@ int main(int argc, char *argv[])
     }
     QElapsedTimer timer;
     timer.start();
-    Matrix<TableData> data(/*10000 **/ 100, 20, ExpandType::Row);
+    constexpr int rows = 100 * 10000;
+    constexpr int columns = 20;
+    Matrix<TableData> data(rows, columns, ExpandType::Row);
     for (int row {0}; row < data.rows(); ++row) {
         for (int column {0}; column < data.columns(); ++column) {
             data.setData(row, column, TableData(colNames.at(column) + QString::number(row)));
         }
     }
     model->resetData(std::move(data));
-
+    qDebug() << "write data row x column [" + QString::number(rows) + " x " + QString::number(columns) + "] cost time:"
+             << timer.elapsed() << "ms";
     table.show();
+
+    // 序列化和反序列化
+    QTimer::singleShot(1000 * 5, [model]() {
+        qDebug() << "start to serialize";
+        QElapsedTimer seTimer;
+        seTimer.restart();
+        const auto d = model->serializeData();
+        const qsizetype size = d.size();
+        qDebug() << "serialize data row x column [" + QString::number(rows) + " x " + QString::number(columns) +
+                    "] cost time:" << seTimer.elapsed() << "ms, data size:" << size << "bytes";
+        model->resetData();
+        QTimer::singleShot(1000 * 5, [model, d]() {
+            qDebug() << "start to deserialize";
+            QElapsedTimer desTimer;
+            desTimer.start();
+            model->deserialize(d);
+            qDebug() << "deserialize data row x column [" + QString::number(rows) + " x " + QString::number(columns) +
+                        "] cost time:" << desTimer.elapsed() << "ms";
+        });
+    });
+
     return QApplication::exec();
 }
 
@@ -171,7 +121,7 @@ int testMatrixRemoveCol_ColumnType()
         }
     }
     qDebug() << "write data(row x column: " + QString::number(rows) + "x" + QString::number(columns) + ") cost:"
-             << timer.elapsed() << "ms";
+            << timer.elapsed() << "ms";
     timer.restart();
 
 
@@ -206,7 +156,7 @@ int testMatrixRemoveRow_RowType()
     constexpr int columns = 100 * 10000;
     constexpr int rows = 20;
     constexpr ExpandType type = ExpandType::Row;
-    std::shared_ptr<Matrix<QString>> mat = std::make_shared<Matrix<QString>>(rows, columns, type);
+    std::shared_ptr<Matrix<QString> > mat = std::make_shared<Matrix<QString> >(rows, columns, type);
     QElapsedTimer timer;
     timer.start();
     for (auto column{0}; column < columns; ++column) {
@@ -218,7 +168,7 @@ int testMatrixRemoveRow_RowType()
         }
     }
     qDebug() << "write data(row x column: " + QString::number(rows) + "x" + QString::number(columns) + ") cost:"
-             << timer.elapsed() << "ms";
+            << timer.elapsed() << "ms";
     timer.restart();
 
     // row and column operator(insert / remove)
@@ -252,7 +202,7 @@ int testMatrixInsertCol_ColumnType()
     constexpr int columns = 20;
     constexpr int rows = 100 * 10000;
     constexpr ExpandType type = ExpandType::Column;
-    std::shared_ptr<Matrix<QString>> mat = std::make_shared<Matrix<QString>>(rows, columns, type);
+    std::shared_ptr<Matrix<QString> > mat = std::make_shared<Matrix<QString> >(rows, columns, type);
     QElapsedTimer timer;
     timer.start();
     for (auto column{0}; column < columns; ++column) {
@@ -264,7 +214,7 @@ int testMatrixInsertCol_ColumnType()
         }
     }
     qDebug() << "write data(row x column: " + QString::number(rows) + "x" + QString::number(columns) + ") cost:"
-             << timer.elapsed() << "ms";
+            << timer.elapsed() << "ms";
     timer.restart();
 
 
@@ -299,7 +249,7 @@ int testMatrixInsertRow_RowType()
     constexpr int columns = 100 * 10000;
     constexpr int rows = 20;
     constexpr ExpandType type = ExpandType::Row;
-    std::shared_ptr<Matrix<QString>> mat = std::make_shared<Matrix<QString>>(rows, columns, type);
+    std::shared_ptr<Matrix<QString> > mat = std::make_shared<Matrix<QString> >(rows, columns, type);
     QElapsedTimer timer;
     timer.start();
     for (auto column{0}; column < columns; ++column) {
@@ -311,7 +261,7 @@ int testMatrixInsertRow_RowType()
         }
     }
     qDebug() << "write data(row x column: " + QString::number(rows) + "x" + QString::number(columns) + ") cost:"
-             << timer.elapsed() << "ms";
+            << timer.elapsed() << "ms";
     timer.restart();
 
     // row and column operator(insert / remove)

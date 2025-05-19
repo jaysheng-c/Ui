@@ -11,6 +11,7 @@
 
 #include "table_model.h"
 
+#include <QtZlib/zlib.h>
 #include <QItemSelection>
 
 #define DEFAULT_VALUE TableData()
@@ -39,6 +40,59 @@ QString alpha(const int section) {
         num2 /= static_cast<int>(alpha.size());
     }
     return colName;
+}
+
+QByteArray compressData(const QByteArray &data)
+{
+    QByteArray compressed;
+    constexpr int BUFF_SIZE = 128 * 1024;
+    char buf[BUFF_SIZE];
+
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+
+    strm.avail_in = data.size();
+    strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(data.data()));
+
+    do {
+        strm.avail_out = BUFF_SIZE;
+        strm.next_out = reinterpret_cast<Bytef*>(buf);
+        deflate(&strm, Z_FINISH);
+        compressed.append(buf, BUFF_SIZE - strm.avail_out);
+    } while (strm.avail_out == 0);
+
+    deflateEnd(&strm);
+    return compressed;
+}
+
+QByteArray decompressData(const QByteArray &compressed)
+{
+    QByteArray decompressed;
+    constexpr int BUFF_SIZE = 128 * 1024;
+    char buf[BUFF_SIZE];
+
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    inflateInit(&strm);
+
+    strm.avail_in = compressed.size();
+    strm.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(compressed.data()));
+
+    int ret;
+    do {
+        strm.avail_out = BUFF_SIZE;
+        strm.next_out = reinterpret_cast<Bytef*>(buf);
+        ret = inflate(&strm, Z_NO_FLUSH);
+        decompressed.append(buf, BUFF_SIZE - strm.avail_out);
+    } while (ret == Z_OK);
+
+    inflateEnd(&strm);
+    return decompressed;
 }
 
 }
@@ -148,6 +202,23 @@ bool TableModel::removeColumns(int position, int columns, const QModelIndex &par
         endResetModel();
     }
     return flag;
+}
+
+QByteArray TableModel::serializeData() const
+{
+    QByteArray data;
+    QDataStream out(&data, QDataStream::WriteOnly);
+    out << *m_data;
+    // 压缩
+    return compressData(data);
+}
+
+void TableModel::deserialize(const QByteArray &data)
+{
+    beginResetModel();
+    QDataStream in(decompressData(data));
+    in >> *m_data;
+    endResetModel();
 }
 
 QVariant TableModel::data(const QItemSelection &selection, int role) const
