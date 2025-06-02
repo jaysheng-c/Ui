@@ -85,7 +85,7 @@ private:
     // font
     quint16 m_family;
     quint8 m_fontType;  // bold italic underline
-    quint8 m_fontSize;
+    float m_fontSize;
 };
 
 Q_DECLARE_METATYPE(TableData)

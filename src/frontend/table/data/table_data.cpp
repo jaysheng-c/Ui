@@ -187,7 +187,7 @@ bool TableData::setData(const TableData::Type type, const QVariant &data)
             const auto font = data.value<QFont>();
             m_family = fontFamilyIndex(font.family());
             m_fontType = fontType(QVector<bool>() << font.bold() << font.italic() << font.underline());
-            m_fontSize = font.pointSize();
+            m_fontSize = static_cast<float>(font.pointSizeF());
             break;
         }
         default:
@@ -208,7 +208,7 @@ bool TableData::setData(const TableData::Type type, QVariant &&data)
             const auto font = data.value<QFont>();
             m_family = fontFamilyIndex(font.family());
             m_fontType = fontType(QVector<bool>() << font.bold() << font.italic() << font.underline());
-            m_fontSize = font.pointSize();
+            m_fontSize = static_cast<float>(font.pointSizeF());
             break;
         }
         default:
@@ -262,7 +262,7 @@ bool TableData::equal(const TableData &other, const QVector<Type> &types) const
         return *this == other;
     }
     bool res = true;
-    for (auto type: types) {
+    for (const auto type: types) {
         res &= equal(other, type);
     }
     return res;
@@ -277,7 +277,8 @@ bool TableData::equal(const TableData &other, const TableData::Type type) const
         case Foreground:    return m_foreground == other.m_foreground;
         case Background:    return m_background == other.m_background;
         case Font:
-            return m_family == other.m_family && m_fontType == other.m_fontType && m_fontSize == other.m_fontSize;
+            return m_family == other.m_family && m_fontType == other.m_fontType
+                && qFuzzyCompare(m_fontSize, other.m_fontSize);
     }
     return false;
 }
@@ -286,7 +287,7 @@ bool TableData::operator==(const TableData &other) const
 {
     return m_value == other.m_value && m_display == other.m_display && m_align == other.m_align &&
            m_foreground == other.m_foreground && m_background == other.m_background && m_family == other.m_family &&
-           m_fontType == other.m_fontType && m_fontSize == other.m_fontSize;
+           m_fontType == other.m_fontType && qFuzzyCompare(m_fontSize, other.m_fontSize);
 }
 
 bool TableData::operator!=(const TableData &other) const
@@ -370,7 +371,8 @@ QDataStream &operator<<(QDataStream &out, const TableData &obj)
 
 QDataStream &operator>>(QDataStream & in, TableData & obj)
 {
-    quint8 align, fontSize, type;
+    float fontSize;
+    quint8 align, type;
     QRgb foreground, background;
     quint16 family;
     in >> obj.m_value >> obj.m_display

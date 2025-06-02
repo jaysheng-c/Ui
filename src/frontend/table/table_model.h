@@ -41,7 +41,7 @@ public: // override
 
 public:
     // serialize
-    QByteArray serializeData() const;
+    NODISCARD QByteArray serializeData() const;
     void deserialize(const QByteArray &data);
 
     // read
