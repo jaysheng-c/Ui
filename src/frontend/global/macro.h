@@ -20,4 +20,8 @@
 #define MAYBE_UNUSED
 #endif
 
+
+#define MIN_ROWS 100
+#define MIN_COLUMNS 20
+
 #endif //DEFINER_H

@@ -81,25 +81,25 @@ int main(int argc, char *argv[])
              << timer.elapsed() << "ms";
     table.show();
 
-    // 序列化和反序列化
-    QTimer::singleShot(1000 * 5, [model]() {
-        qDebug() << "start to serialize";
-        QElapsedTimer seTimer;
-        seTimer.restart();
-        const auto d = model->serializeData();
-        const qsizetype size = d.size();
-        qDebug() << "serialize data row x column [" + QString::number(rows) + " x " + QString::number(columns) +
-                    "] cost time:" << seTimer.elapsed() << "ms, data size:" << size << "bytes";
-        model->resetData();
-        QTimer::singleShot(1000 * 5, [model, d]() {
-            qDebug() << "start to deserialize";
-            QElapsedTimer desTimer;
-            desTimer.start();
-            model->deserialize(d);
-            qDebug() << "deserialize data row x column [" + QString::number(rows) + " x " + QString::number(columns) +
-                        "] cost time:" << desTimer.elapsed() << "ms";
-        });
-    });
+    // // 序列化和反序列化
+    // QTimer::singleShot(1000 * 5, [model]() {
+    //     qDebug() << "start to serialize";
+    //     QElapsedTimer seTimer;
+    //     seTimer.restart();
+    //     const auto d = model->serializeData();
+    //     const qsizetype size = d.size();
+    //     qDebug() << "serialize data row x column [" + QString::number(rows) + " x " + QString::number(columns) +
+    //                 "] cost time:" << seTimer.elapsed() << "ms, data size:" << size << "bytes";
+    //     model->resetData();
+    //     QTimer::singleShot(1000 * 5, [model, d]() {
+    //         qDebug() << "start to deserialize";
+    //         QElapsedTimer desTimer;
+    //         desTimer.start();
+    //         model->deserialize(d);
+    //         qDebug() << "deserialize data row x column [" + QString::number(rows) + " x " + QString::number(columns) +
+    //                     "] cost time:" << desTimer.elapsed() << "ms";
+    //     });
+    // });
 
     return QApplication::exec();
 }

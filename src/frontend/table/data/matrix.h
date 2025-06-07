@@ -15,9 +15,6 @@
 #include <QVector>
 #include "frontend/global/macro.h"
 
-#define MIN_ROWS 100
-#define MIN_COLUMNS 20
-
 enum class ExpandType {Column, Row};
 
 template<class T>
