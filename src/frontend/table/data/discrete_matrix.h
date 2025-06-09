@@ -21,9 +21,9 @@
 
 namespace DiscreteConstexpr {
 
-constexpr int g_shardCount {16};
-constexpr int g_colCacheIndex {0};
-constexpr int g_rowCacheIndex {1};
+constexpr int g_shardCount{16};
+constexpr int g_colCacheIndex{0};
+constexpr int g_rowCacheIndex{1};
 
 }
 
@@ -114,6 +114,14 @@ public:
         const auto &[map, l] = m_data.at(shard(i));
         QReadLocker dLocker(&l);
         return map.value(i, T());
+    }
+    NODISCARD qsizetype dataShard(const int row, const int column) const noexcept
+    {
+        const auto i = this->index(row, column);
+        if (i == -1) {
+            return -1;
+        }
+        return shard(i);
     }
 
     // set
@@ -352,7 +360,7 @@ private:
     {
         return static_cast<qsizetype>(qHash(index) % DiscreteConstexpr::g_shardCount);
     }
-    NODISCARD qsizetype index(const qsizetype row, const qsizetype column) const
+    NODISCARD qsizetype index(const qsizetype row, const qsizetype column) const noexcept
     {
         if (column >= m_columnIndexes.size()) {
             qWarning() << "column out of range";
