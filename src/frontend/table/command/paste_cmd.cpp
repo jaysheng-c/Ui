@@ -45,8 +45,8 @@ class CopyCmd : public QUndoCommand {
 public:
     CopyCmd(const QPointer<TableView> &table, QVariant &&old, QVariant &&cur, OptData &&optData,
             const int role = Qt::UserRole)
-        : QUndoCommand("copy_paste"), m_table(table), m_old(std::move(old)), m_cur(std::move(cur)),
-          m_optData(optData), m_role(role)
+        : QUndoCommand("copy_paste"), m_role(role), m_table(table), m_old(std::move(old)),
+          m_cur(std::move(cur)), m_optData(optData)
     {
     }
 
