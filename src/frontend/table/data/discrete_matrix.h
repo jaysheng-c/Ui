@@ -212,6 +212,42 @@ public:
         map[realIndex] = std::move(data);
         return true;
     }
+    MAYBE_UNUSED bool setData(const int shardId, const int row, const int column, const T &data)
+    {
+        if (shardId > DiscreteConstexpr::g_shardCount) {
+            return false;
+        }
+        QReadLocker locker(&m_lock);
+        const qsizetype realIndex = this->index(row, column);
+        if (realIndex == -1) {
+            return false;
+        }
+        auto &[map, lock] = m_data[shardId];
+        QWriteLocker dataLocker(&lock);
+        if (data == T()) {
+            return map.remove(realIndex);
+        }
+        map[realIndex] = data;
+        return true;
+    }
+    MAYBE_UNUSED bool setData(const int shardId, const int row, const int column, T &&data)
+    {
+        if (shardId > DiscreteConstexpr::g_shardCount) {
+            return false;
+        }
+        QReadLocker locker(&m_lock);
+        const qsizetype realIndex = this->index(row, column);
+        if (realIndex == -1) {
+            return false;
+        }
+        auto &[map, lock] = m_data[shardId];
+        QWriteLocker dataLocker(&lock);
+        if (data == T()) {
+            return map.remove(realIndex);
+        }
+        map[realIndex] = std::move(data);
+        return true;
+    }
 
     MAYBE_UNUSED bool insertColumns(const int column, const int count)
     {

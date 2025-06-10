@@ -43,6 +43,96 @@ int testMatrixInsertCol_ColumnType();
 
 int testMatrixInsertRow_RowType();
 
+namespace {
+class WriteData final : public QRunnable {
+public:
+
+    struct Data {
+        int row{-1};
+        int column{-1};
+        QString data;
+    };
+
+    WriteData(const int shard, QList<Data> &&data, TableModel::Data *modelData)
+        : QRunnable(), m_shard(shard), m_data(std::move(data)), m_modelData(modelData) {}
+
+protected:
+    void run() override {
+        for (auto &[row, column, data] : m_data) {
+            m_modelData->setData(m_shard, row, column, TableData(data));
+        }
+    }
+
+    int m_shard;
+    QList<Data> m_data;
+    TableModel::Data *m_modelData;
+};
+
+class WriteThread final : public QThread {
+public:
+    explicit WriteThread(TableView *table) : QThread(table), m_table(table)
+    {
+
+    }
+protected:
+    void run() override
+    {
+        if (m_table.isNull()) {
+            qInfo() << "table is null";
+            return;
+        }
+        const auto model = m_table->tableModel();
+        constexpr int rows = 100 * 10000;
+        constexpr int columns = 20;
+        QStringList colNames(columns);
+        for (int i{0}; i < colNames.size(); ++i) {
+            colNames[i] = alpha(i);
+        }
+
+        constexpr double count = rows * columns;
+        const int childLength = qCeil(count / DiscreteConstexpr::g_shardCount);
+
+        QList<QList<WriteData::Data>> dataList(DiscreteConstexpr::g_shardCount, QList<WriteData::Data>(childLength));
+        QList<int> indexes(DiscreteConstexpr::g_shardCount);
+
+        QElapsedTimer timer;
+        timer.start();
+
+        TableModel::Data data(rows, columns);
+        for (int row {0}; row < data.rows(); ++row) {
+            for (int column {0}; column < data.columns(); ++column) {
+                const qsizetype shard = data.dataShard(row, column);
+                auto &idx = indexes[shard];
+                if (dataList[shard].size() <= idx) {
+                    dataList[shard].resize(idx + qCeil(static_cast<double>(idx) / 4));
+                }
+                dataList[shard][idx] = {row, column, colNames.at(column) + QString::number(row)};
+                ++idx;
+            }
+        }
+        qDebug() << "get indexes" << timer.elapsed() << "ms";
+        for (auto &d : dataList) {
+            d.removeIf([](const WriteData::Data &item) { return item.row == -1 || item.column == -1; });
+        }
+
+        // 写数据
+        timer.restart();
+        for (auto idx {0}; idx < dataList.size(); ++idx) {
+            auto &d = dataList[idx];
+            QThreadPool::globalInstance()->start(new WriteData(idx, std::move(d), &data));
+            d = {};
+        }
+
+        QThreadPool::globalInstance()->waitForDone();
+        model->resetData(std::move(data));
+        qDebug() << "write data row x column [" + QString::number(rows) + " x " + QString::number(columns) + "] cost time:"
+                 << static_cast<double>(timer.elapsed()) / 1000 << "s";
+    }
+
+    QPointer<TableView> m_table;
+};
+}
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -60,29 +150,11 @@ int main(int argc, char *argv[])
 //    return testMatrixInsertRow_RowType();
 
     TableView table;
+    table.resize(800, 600);
     table.show();
 
-    QThreadPool::globalInstance()->start([&table]() {
-        QStringList colNames(20);
-        for (int i{0}; i < colNames.size(); ++i) {
-            colNames[i] = alpha(i);
-        }
-
-        const auto model = table.tableModel();
-        QElapsedTimer timer;
-        timer.start();
-        constexpr int rows = 100 * 10000;
-        constexpr int columns = 20;
-        TableModel::Data data(rows, columns);
-        for (int row {0}; row < data.rows(); ++row) {
-            for (int column {0}; column < data.columns(); ++column) {
-                data.setData(row, column, TableData(colNames.at(column) + QString::number(row)));
-            }
-        }
-        model->resetData(std::move(data));
-        qDebug() << "write data row x column [" + QString::number(rows) + " x " + QString::number(columns) + "] cost time:"
-                 << static_cast<double>(timer.elapsed()) / 1000 << "s";
-    });
+    auto *writeThread = new WriteThread(&table);
+    writeThread->start();
 
     // // 序列化和反序列化
     // QTimer::singleShot(1000 * 5, [model]() {
