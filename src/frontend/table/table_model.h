@@ -13,15 +13,24 @@
 #define TABLE_MODEL_H
 
 #include <QAbstractTableModel>
-#include "frontend/global/macro.h"
-#include "data/table_data.h"
+#include "data/discrete_matrix.h"
 #include "data/matrix.h"
+#include "data/table_data.h"
+#include "frontend/global/macro.h"
 
 class QItemSelection;
 
 class UI_EXPORT TableModel : public QAbstractTableModel {
 Q_OBJECT
 public:
+
+#ifdef DISCRETE_MATRIX_H
+#define DISCRETE_MATRIX_MODEL
+    using Data = DiscreteMatrix<TableData>;
+#else
+    using Data = Matrix<TableData>;
+#endif
+
     explicit TableModel(ExpandType type, QObject *parent = nullptr);
 
 public: // override
@@ -48,11 +57,12 @@ public:
     NODISCARD QVariant data(const QItemSelection &selection, int role = Qt::DisplayRole) const;
     // set
     NODISCARD bool setDataWithoutCommit(const QModelIndex &index, const QVariant &value, int role) const;
-    void resetData(Matrix<TableData> &&data);
-    void resetData(const Matrix<TableData> &data);
+
+    void resetData(Data &&data);
+    void resetData(const Data &data);
     void resetData();
 private:
-    std::unique_ptr<Matrix<TableData>> m_data;
+    std::unique_ptr<Data> m_data;
 };
 
 

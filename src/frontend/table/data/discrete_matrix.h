@@ -46,7 +46,7 @@ public:
         m_rowIndexes = other.m_rowIndexes;
         m_columnIndexes = other.m_columnIndexes;
         m_invalidCache = other.m_invalidCache;
-        for (int i{0}; i < other.m_data; ++i) {
+        for (int i{0}; i < other.m_data.size(); ++i) {
             auto &[d, l] = m_data[i];
             QWriteLocker locker(&l);
             d = other.m_data[i].data;
@@ -60,7 +60,7 @@ public:
         m_columnIndexes = std::move(other.m_columnIndexes);
         m_invalidCache = std::move(other.m_invalidCache);
         m_data = std::move(other.m_data);
-        for (int i{0}; i < other.m_data; ++i) {
+        for (int i{0}; i < other.m_data.size(); ++i) {
             auto &[d, l] = m_data[i];
             QWriteLocker locker(&l);
             d = std::move(other.m_data[i].data);
@@ -76,7 +76,7 @@ public:
         m_rowIndexes = other.m_rowIndexes;
         m_columnIndexes = other.m_columnIndexes;
         m_invalidCache = other.m_invalidCache;
-        for (int i{0}; i < other.m_data; ++i) {
+        for (int i{0}; i < other.m_data.size(); ++i) {
             auto &[d, l] = m_data[i];
             QWriteLocker locker(&l);
             d = other.m_data[i].data;
@@ -94,7 +94,7 @@ public:
         m_columnIndexes = std::move(other.m_columnIndexes);
         m_invalidCache = std::move(other.m_invalidCache);
         m_data = std::move(other.m_data);
-        for (int i{0}; i < other.m_data; ++i) {
+        for (int i{0}; i < other.m_data.size(); ++i) {
             auto &[d, l] = m_data[i];
             QWriteLocker locker(&l);
             d = std::move(other.m_data[i].data);

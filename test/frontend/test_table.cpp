@@ -60,26 +60,29 @@ int main(int argc, char *argv[])
 //    return testMatrixInsertRow_RowType();
 
     TableView table;
-    const auto model = table.tableModel();
-
-    QStringList colNames(20);
-    for (int i{0}; i < colNames.size(); ++i) {
-        colNames[i] = alpha(i);
-    }
-    QElapsedTimer timer;
-    timer.start();
-    constexpr int rows = 100 * 10000;
-    constexpr int columns = 20;
-    Matrix<TableData> data(rows, columns, ExpandType::Row);
-    for (int row {0}; row < data.rows(); ++row) {
-        for (int column {0}; column < data.columns(); ++column) {
-            data.setData(row, column, TableData(colNames.at(column) + QString::number(row)));
-        }
-    }
-    model->resetData(std::move(data));
-    qDebug() << "write data row x column [" + QString::number(rows) + " x " + QString::number(columns) + "] cost time:"
-             << timer.elapsed() << "ms";
     table.show();
+
+    QThreadPool::globalInstance()->start([&table]() {
+        QStringList colNames(20);
+        for (int i{0}; i < colNames.size(); ++i) {
+            colNames[i] = alpha(i);
+        }
+
+        const auto model = table.tableModel();
+        QElapsedTimer timer;
+        timer.start();
+        constexpr int rows = 100 * 10000;
+        constexpr int columns = 20;
+        TableModel::Data data(rows, columns);
+        for (int row {0}; row < data.rows(); ++row) {
+            for (int column {0}; column < data.columns(); ++column) {
+                data.setData(row, column, TableData(colNames.at(column) + QString::number(row)));
+            }
+        }
+        model->resetData(std::move(data));
+        qDebug() << "write data row x column [" + QString::number(rows) + " x " + QString::number(columns) + "] cost time:"
+                 << static_cast<double>(timer.elapsed()) / 1000 << "s";
+    });
 
     // // 序列化和反序列化
     // QTimer::singleShot(1000 * 5, [model]() {

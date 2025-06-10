@@ -98,8 +98,13 @@ QByteArray decompressData(const QByteArray &compressed)
 }
 
 TableModel::TableModel(ExpandType type, QObject *parent)
-    : QAbstractTableModel(parent), m_data(std::make_unique<Matrix<TableData>>(MIN_ROWS, MIN_COLUMNS, type))
+    : QAbstractTableModel(parent)
 {
+#ifdef DISCRETE_MATRIX_MODEL
+    m_data = std::make_unique<DiscreteMatrix<TableData>>(MIN_ROWS, MIN_COLUMNS);
+#else
+    m_data = std::make_unique<Matrix<TableData>>(MIN_ROWS, MIN_COLUMNS, type);
+#endif
 }
 
 int TableModel::rowCount(const QModelIndex &parent) const
@@ -150,6 +155,23 @@ bool TableModel::setData(const QModelIndex &index, const QVariant &value, int ro
     if (!index.isValid()) {
         return false;
     }
+#ifdef DISCRETE_MATRIX_MODEL
+    bool flag = true;
+    if (role == Qt::UserRole) {
+        flag &= m_data->setData(index.row(), index.column(), value.value<TableData>());
+    } else {
+        if (const int dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1); dataType != -1) {
+            auto data = m_data->at(index.row(), index.column());
+            flag &= data.setData(static_cast<TableData::Type>(dataType), value);
+            flag &= m_data->setData(index.row(), index.column(), data);
+        }
+    }
+    if (flag) {
+        emit dataChanged(index, index);
+        return flag;
+    }
+#else
+
     if (role == Qt::UserRole) {
         m_data->ref(index.row(), index.column()) = value.value<TableData>();
         emit dataChanged(index, index);
@@ -161,13 +183,15 @@ bool TableModel::setData(const QModelIndex &index, const QVariant &value, int ro
         emit dataChanged(index, index);
         return true;
     }
+#endif
+
     return QAbstractItemModel::setData(index, value, role);
 }
 
 bool TableModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
     beginInsertRows(parent, position, position + rows - 1);
-    const bool flag = m_data->insertRows(position, rows, DEFAULT_VALUE);
+    const bool flag = m_data->insertRows(position, rows);
     endInsertRows();
     return flag;
 }
@@ -187,7 +211,7 @@ bool TableModel::removeRows(int position, int rows, const QModelIndex &parent)
 bool TableModel::insertColumns(int position, int columns, const QModelIndex &parent)
 {
     beginInsertColumns(parent, position, position + columns - 1);
-    const bool flag = m_data->insertColumns(position, columns, DEFAULT_VALUE);
+    const bool flag = m_data->insertColumns(position, columns);
     endInsertColumns();
     return flag;
 }
@@ -208,7 +232,7 @@ QByteArray TableModel::serializeData() const
 {
     QByteArray data;
     QDataStream out(&data, QDataStream::WriteOnly);
-    out << *m_data;
+    // out << *m_data;
     // 压缩
     return compressData(data);
 }
@@ -217,7 +241,7 @@ void TableModel::deserialize(const QByteArray &data)
 {
     beginResetModel();
     QDataStream in(decompressData(data));
-    in >> *m_data;
+    // in >> *m_data;
     endResetModel();
 }
 
@@ -247,6 +271,18 @@ bool TableModel::setDataWithoutCommit(const QModelIndex &index, const QVariant &
     if (!index.isValid()) {
         return false;
     }
+#ifdef DISCRETE_MATRIX_MODEL
+    if (role == Qt::UserRole) {
+        return m_data->setData(index.row(), index.column(), value.value<TableData>());
+    }
+    if (const int dataType = QRoleToDataType.value(static_cast<Qt::ItemDataRole>(role), -1); dataType != -1) {
+        bool flag = true;
+        auto data = m_data->at(index.row(), index.column());
+        flag &= data.setData(static_cast<TableData::Type>(dataType), value);
+        flag &= m_data->setData(index.row(), index.column(), data);
+        return flag;
+    }
+#else
     if (role == Qt::UserRole) {
         m_data->ref(index.row(), index.column()) = value.value<TableData>();
         return true;
@@ -256,26 +292,31 @@ bool TableModel::setDataWithoutCommit(const QModelIndex &index, const QVariant &
         m_data->ref(index.row(), index.column()).setData(static_cast<TableData::Type>(dataType), value);
         return true;
     }
+#endif
     return false;
 }
 
-void TableModel::resetData(Matrix<TableData> &&data)
+void TableModel::resetData(Data &&data)
 {
     beginResetModel();
-    m_data = std::make_unique<Matrix<TableData>>(data);
+    m_data = std::make_unique<Data>(data);
     endResetModel();
 }
 
-void TableModel::resetData(const Matrix<TableData> &data)
+void TableModel::resetData(const Data &data)
 {
     beginResetModel();
-    m_data = std::make_unique<Matrix<TableData>>(data);
+    m_data = std::make_unique<Data>(data);
     endResetModel();
 }
 
 void TableModel::resetData()
 {
     beginResetModel();
-    m_data = std::make_unique<Matrix<TableData>>(MIN_ROWS, MIN_COLUMNS, m_data->type());
+#ifdef DISCRETE_MATRIX_MODEL
+    m_data = std::make_unique<Data>(MIN_ROWS, MIN_COLUMNS);
+#else
+    m_data = std::make_unique<Data>(MIN_ROWS, MIN_COLUMNS, m_data->type());
+#endif
     endResetModel();
 }
