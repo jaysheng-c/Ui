@@ -1,0 +1,14 @@
+/* ToolBar */
+ToolBar {
+    background-color: rgb(43, 45, 48);
+    border: 1px solid rgb(43, 54, 48);
+}
+ToolBar QToolButton {
+    border-radius: 5px;
+    padding: 3px;
+    color: rgb(209, 224, 228);
+    font: 10pt;
+}
+ToolBar QToolButton:hover {
+    background-color: rgb(65, 66, 69);
+}

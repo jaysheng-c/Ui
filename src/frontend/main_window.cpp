@@ -20,7 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     this->setMenuWidget(new TitleWidget(this));
-    this->addToolBar(Qt::TopToolBarArea, new ToolBar(this));
+    auto *leftToolBar = new ToolBar(this);
+
+    leftToolBar->setMovable(false);
+    leftToolBar->setFloatable(false);
+    this->addToolBar(Qt::LeftToolBarArea, leftToolBar);
 
     qDebug() << qApp->metaObject()->className();
 }
