@@ -16,6 +16,8 @@
 
 class ToolBar : public QToolBar {
 Q_OBJECT
+signals:
+    void triggered(bool checked, int type);
 public:
     explicit ToolBar(QWidget *parent = nullptr);
 

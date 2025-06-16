@@ -12,10 +12,10 @@
 #ifndef TITLE_WIDGET_H
 #define TITLE_WIDGET_H
 
-#include <QWidget>
+#include <QFrame>
 
 
-class TitleWidget : public QWidget {
+class TitleWidget : public QFrame {
 Q_OBJECT
 public:
     explicit TitleWidget(QWidget *parent = nullptr);
