@@ -18,7 +18,6 @@ ToolBar::ToolBar(QWidget *parent)
     : QToolBar(parent)
 {
     this->setObjectName("ToolBar");
-    this->setFixedWidth(40);
     this->layout()->setSpacing(8);
 }
 

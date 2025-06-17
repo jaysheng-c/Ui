@@ -36,11 +36,6 @@ public:
 
         (void) connect(dockTitle, &DockTitleWidget::closeClicked, [this]() { this->setVisible(false); });
     }
-
-    DockTitleWidget *dockTitle() const
-    {
-        return qobject_cast<DockTitleWidget *>(titleBarWidget());
-    }
 };
 
 }
@@ -48,6 +43,7 @@ public:
 MainToolLayoutObj::MainToolLayoutObj(MainWindow *parent)
     : QObject(parent), m_parent(parent), m_toolBar(new ToolBar(parent)), m_actionGroup(new QActionGroup(m_toolBar))
 {
+    m_toolBar->setFixedWidth(40);
     m_toolBar->setMovable(false);
     m_toolBar->setFloatable(false);
     m_actionGroup->setExclusive(false);
