@@ -12,6 +12,8 @@ target_sources(ui PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/global/global.h
         ${CMAKE_CURRENT_LIST_DIR}/main_window.cpp
         ${CMAKE_CURRENT_LIST_DIR}/main_window.h
+        ${CMAKE_CURRENT_LIST_DIR}/main_tool_layout_obj.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/main_tool_layout_obj.h
         ${ToolFile}
         ${TitleFile}
         ${TableFile}

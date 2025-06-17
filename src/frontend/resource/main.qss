@@ -1,14 +1,21 @@
 /* MainWindow */
+MainWindow {
+    background-color: rgb(43, 45, 48);
+    border: none;
+}
 
 /* TitleWidget */
 TitleWidget {
     background-color: rgb(60, 63, 65);
+    border: none;
 }
 
 /* ToolBar */
 ToolBar {
     background-color: rgb(43, 45, 48);
     border: 1px solid rgb(43, 54, 48);
+    border: none;
+    /*border: 1px solid rgb(30, 31, 34);*/
 }
 ToolBar QToolButton {
     border-radius: 5px;
@@ -20,7 +27,17 @@ ToolBar QToolButton:hover {
     background-color: rgb(65, 66, 69);
 }
 ToolBar QToolButton:checked {
-background-color: rgb(75, 76, 79);
+    background-color: rgb(75, 76, 79);
+}
+
+/* DockTilteWidget */
+DockTitleWidget {
+    border: none;
+    background-color: rgb(43, 45, 48);
+    color: rgb(223, 225, 229);
+    font: 10pt;
+    qproperty-closeBackground: rgb(43, 45, 48);
+    qproperty-closeBackground_hover: rgb(61, 63, 66);
 }
 
 /* QTabWidget */

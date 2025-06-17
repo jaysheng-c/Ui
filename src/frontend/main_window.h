@@ -13,12 +13,18 @@
 #define MAIN_WINDOW_H
 
 #include <QMainWindow>
+#include <QPointer>
 #include "global/global.h"
+
+class MainToolLayoutObj;
 
 class UI_EXPORT MainWindow : public QMainWindow {
 Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+
+private:
+    QPointer<MainToolLayoutObj> m_mainToolLayoutObj;
 };
 
 

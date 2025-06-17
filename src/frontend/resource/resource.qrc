@@ -2,4 +2,9 @@
     <qresource prefix="/Qss">
         <file>main.qss</file>
     </qresource>
+    <qresource prefix="/">
+        <file>image/file.png</file>
+        <file>image/project.png</file>
+        <file>image/down.png</file>
+    </qresource>
 </RCC>

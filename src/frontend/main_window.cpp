@@ -10,21 +10,21 @@
   */
 
 #include "main_window.h"
-#include "toolbar/tool_bar.h"
-#include "title/title_widget.h"
-#include "table/table_view.h"
 
 #include <QApplication>
 
+#include "main_tool_layout_obj.h"
+#include "table/table_view.h"
+#include "title/title_widget.h"
+
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), m_mainToolLayoutObj(new MainToolLayoutObj(this))
 {
     this->setMenuWidget(new TitleWidget(this));
-    auto *leftToolBar = new ToolBar(this);
-
-    leftToolBar->setMovable(false);
-    leftToolBar->setFloatable(false);
-    this->addToolBar(Qt::LeftToolBarArea, leftToolBar);
 
     qDebug() << qApp->metaObject()->className();
+
+    m_mainToolLayoutObj->init();
+    this->addToolBar(Qt::LeftToolBarArea, m_mainToolLayoutObj->toolBar());
+    this->setCentralWidget(new TableView(this));
 }
