@@ -11,6 +11,8 @@
 
 #include "main_tool_layout_obj.h"
 #include <QActionGroup>
+#include <QFileSystemModel>
+#include <QVBoxLayout>
 
 #include "main_window.h"
 
@@ -27,12 +29,20 @@ public:
     {
         this->setFloating(false);
         this->setAllowedAreas(Qt::LeftDockWidgetArea);
-        this->setFeatures(DockWidgetClosable);
-        this->setWidget(widget);
+        this->setFeatures(NoDockWidgetFeatures);
+        this->setTitleBarWidget(new QWidget(this));
 
         auto *dockTitle = new DockTitleWidget(this);
         dockTitle->setWindowTitle(name);
-        this->setTitleBarWidget(dockTitle);
+        dockTitle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+        auto *verWidget = new QWidget(this);
+        verWidget->setLayout(new QVBoxLayout(verWidget));
+        verWidget->layout()->setContentsMargins(0, 0, 0, 0);
+        verWidget->layout()->setSpacing(0);
+        verWidget->layout()->addWidget(dockTitle);
+        verWidget->layout()->addWidget(widget);
+        this->setWidget(verWidget);
 
         (void) connect(dockTitle, &DockTitleWidget::closeClicked, [this]() { this->setVisible(false); });
     }
@@ -51,9 +61,9 @@ MainToolLayoutObj::MainToolLayoutObj(MainWindow *parent)
 
 void MainToolLayoutObj::init()
 {
-    auto createAction = [this](const QString &name, const bool checked = false) {
+    auto createAction = [this](const QString &name, QWidget *widget, const bool checked = false) {
         auto *action = this->addAction(name, checked);
-        auto *dock = new DockWidget(name, m_parent, new TreeView(m_parent));
+        auto *dock = new DockWidget(name, m_parent, widget);
         dock->setVisible(checked);
         if (checked) {
             m_parent->addDockWidget(Qt::LeftDockWidgetArea, dock);
@@ -63,8 +73,12 @@ void MainToolLayoutObj::init()
         (void) connect(dock, &QDockWidget::visibilityChanged, this, &MainToolLayoutObj::onDockVisibleChanged);
     };
 
-    createAction("Project", true);
-    createAction("File");
+    createAction("Project", new TreeView(m_parent), true);
+    auto *dirTree = new TreeView(m_parent);
+    auto *model = new QFileSystemModel(dirTree);
+    dirTree->setModel(model);
+    model->setRootPath(QDir::currentPath());
+    createAction("File", dirTree);
 
     (void) connect(m_actionGroup, &QActionGroup::triggered, this, &MainToolLayoutObj::onActionTriggered);
 }

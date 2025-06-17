@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     }
 
     MainWindow w;
-    w.resize(800, 600);
+    w.resize(1100, 600);
     w.show();
 
     ret = QApplication::exec();
