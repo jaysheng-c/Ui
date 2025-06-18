@@ -16,7 +16,7 @@
 #include <QStyle>
 
 DockTitleWidget::DockTitleWidget(QWidget *parent)
-    : QFrame(parent)
+    : QFrame(parent), m_closeHover(false)
 {
     this->setFixedHeight(40);
     this->setMouseTracking(true);
@@ -42,6 +42,7 @@ void DockTitleWidget::mouseReleaseEvent(QMouseEvent *event)
         if (var.toBool()) {
             // 关闭窗口
             emit closeClicked();
+            m_closeHover = false;
         }
     }
 }
